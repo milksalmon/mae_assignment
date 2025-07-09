@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "117949893379",
+    "project_id": "jambu-217b5",
+    "storage_bucket": "jambu-217b5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:117949893379:android:c18f87ff8c1f292f28f736",
+        "android_client_info": {
+          "package_name": "com.example.mae_assignment"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBeOgHoCH3moXfsu2o_mOQjULjNFO81RN4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
