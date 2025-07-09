@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
         backgroundColor: Color.fromARGB(255, 246, 245, 245),
         body: Center (
           child: Text(
-            "Native Splash Tutorial",
+            "Test",
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
