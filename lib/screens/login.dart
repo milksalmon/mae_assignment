@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'create_account.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,7 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // 🍧 Logo
             Image.asset(
               'assets/logo.png', // replace with your image path
               height: 120,
@@ -104,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
             const SizedBox(height: 10),
 
-            // 🔗 Forgot Password
+            //  Forgot Password
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
@@ -124,54 +124,59 @@ class _LoginScreenState extends State<LoginScreen> {
 
             const SizedBox(height: 10),
 
-            // 🔵 Google Sign-in Button
-            OutlinedButton.icon(
-              onPressed: () {
-                // TODO: Google Sign-In
-              },
-              icon: Image.asset(
-                'assets/images/google_logo.png',
-                height: 24,
-              ), // replace with your asset
-              label: const Text('Sign in with Google'),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.green),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+            //  Google Sign-in Button
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.50,
+              height: 50,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  // TODO: Google Sign-In
+                },
+                icon: Image.asset('assets/google.png', height: 24),
+                label: const Text('Sign in with Google'),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.green),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
                 ),
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(width: 25, height: 20),
 
-            // 🟢 Sign Up
+            // Sign Up
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text("Don't have an account?"),
                 TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.green, // default text color
+                  ).copyWith(
+                    foregroundColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.hovered)) {
+                        return const Color.fromRGBO(
+                          255,
+                          47,
+                          103,
+                          100,
+                        ); // on hover
+                      }
+                      return Colors.green; // default
+                    }),
+                  ),
+
                   onPressed: () {
                     // TODO: Navigate to sign up
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CreateAccount(),
+                      ),
+                    );
                   },
-                  child: const Text(
-                    'Sign Up',
-                    style: TextStyle(color: Colors.green),
-
-                    //                     TextButton(
-                    //   onPressed: () {
-                    //     Navigator.push(
-                    //       context,
-                    //       MaterialPageRoute(
-                    //         builder: (context) => const CreateAccount(),
-                    //       ),
-                    //     );
-                    //   },
-                    //   child: const Text(
-                    //     "Don't have an account? Sign up",
-                    //     style: TextStyle(color: Colors.green),
-                    //   ),
-                    // ),
-                  ),
+                  child: const Text('Sign Up'),
                 ),
               ],
             ),
