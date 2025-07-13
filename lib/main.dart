@@ -1,24 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-import 'screens/authtest.dart';                     // <— your file
-import 'firebase_options.dart';            // <— created by flutterfire configure
+import 'screens/login.dart';
+import 'screens/create_account.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Make sure Firebase is ready before you build any UI
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // Put your Web‑client ID from Google Cloud here
   static const _googleClientId =
       '117949893379-n8l75r4vm1f3gu3h4ocs23jfrmfkkb17.apps.googleusercontent.com';
 
@@ -27,12 +22,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Jambu',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorSchemeSeed: Colors.green,
-        useMaterial3: true,
-      ),
-      // ↓↓↓ AuthGate becomes the first screen
-      home: const AuthGate(clientId: _googleClientId),
+      theme: ThemeData(colorSchemeSeed: Colors.green, useMaterial3: true),
+      home: const LoginScreen(), // ← Set your login screen here
     );
   }
 }
