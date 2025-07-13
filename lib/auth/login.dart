@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'create_account.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -98,7 +99,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: () {
                   // TODO: Handle login logic
                 },
-                child: const Text('Login'),
+                child: Text(
+                  'Login',
+                  style: GoogleFonts.montserrat(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
 
@@ -126,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
             //  Google Sign-in Button
             SizedBox(
-              width: MediaQuery.of(context).size.width * 0.50,
+              width: double.infinity,
               height: 50,
               child: OutlinedButton.icon(
                 onPressed: () {

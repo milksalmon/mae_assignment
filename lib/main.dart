@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
-import 'screens/login.dart';
-import 'screens/create_account.dart';
+import 'auth/login.dart';
+import 'auth/create_account.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

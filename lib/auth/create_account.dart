@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+// import '../organiser/organiser_registration.dart';
 
 class CreateAccount extends StatefulWidget {
   const CreateAccount({super.key});
@@ -19,9 +20,9 @@ class _CreateAccountState extends State<CreateAccount> {
   void _createAccount() {
     if (_formKey.currentState!.validate()) {
       if (passwordController.text != confirmPasswordController.text) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Passwords do not match")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Passwords do not match")));
         return;
       }
 
@@ -31,9 +32,9 @@ class _CreateAccountState extends State<CreateAccount> {
       print('Email: ${emailController.text}');
       print('Password: ${passwordController.text}');
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account created!')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Account created!')));
     }
   }
 
@@ -77,8 +78,11 @@ class _CreateAccountState extends State<CreateAccount> {
                     labelStyle: GoogleFonts.montserrat(),
                     border: const OutlineInputBorder(),
                   ),
-                  validator: (value) =>
-                      value!.isEmpty ? 'Please enter your first name' : null,
+                  validator:
+                      (value) =>
+                          value!.isEmpty
+                              ? 'Please enter your first name'
+                              : null,
                 ),
                 const SizedBox(height: 20),
                 TextFormField(
@@ -88,8 +92,9 @@ class _CreateAccountState extends State<CreateAccount> {
                     labelStyle: GoogleFonts.montserrat(),
                     border: const OutlineInputBorder(),
                   ),
-                  validator: (value) =>
-                      value!.isEmpty ? 'Please enter your last name' : null,
+                  validator:
+                      (value) =>
+                          value!.isEmpty ? 'Please enter your last name' : null,
                 ),
                 const SizedBox(height: 20),
                 TextFormField(
@@ -99,8 +104,9 @@ class _CreateAccountState extends State<CreateAccount> {
                     labelStyle: GoogleFonts.montserrat(),
                     border: const OutlineInputBorder(),
                   ),
-                  validator: (value) =>
-                      value!.isEmpty ? 'Please enter your email' : null,
+                  validator:
+                      (value) =>
+                          value!.isEmpty ? 'Please enter your email' : null,
                 ),
                 const SizedBox(height: 20),
                 TextFormField(
@@ -111,9 +117,11 @@ class _CreateAccountState extends State<CreateAccount> {
                     labelStyle: GoogleFonts.montserrat(),
                     border: const OutlineInputBorder(),
                   ),
-                  validator: (value) => value!.length < 6
-                      ? 'Password must be at least 6 characters'
-                      : null,
+                  validator:
+                      (value) =>
+                          value!.length < 6
+                              ? 'Password must be at least 6 characters'
+                              : null,
                 ),
                 const SizedBox(height: 20),
                 TextFormField(
@@ -124,14 +132,17 @@ class _CreateAccountState extends State<CreateAccount> {
                     labelStyle: GoogleFonts.montserrat(),
                     border: const OutlineInputBorder(),
                   ),
-                  validator: (value) =>
-                      value!.isEmpty ? 'Please confirm your password' : null,
+                  validator:
+                      (value) =>
+                          value!.isEmpty
+                              ? 'Please confirm your password'
+                              : null,
                 ),
                 const SizedBox(height: 30),
                 ElevatedButton(
                   onPressed: _createAccount,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.brown,
+                    backgroundColor: Colors.green,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: Text(
@@ -140,6 +151,25 @@ class _CreateAccountState extends State<CreateAccount> {
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20), // spacing
+                TextButton(
+                  onPressed: () {
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(
+                    //     builder: (context) => const OrganiserRegister(),
+                    //   ),
+                    // );
+                  },
+                  child: Text(
+                    'Register as an Event Organiser',
+                    style: GoogleFonts.montserrat(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green,
                     ),
                   ),
                 ),
