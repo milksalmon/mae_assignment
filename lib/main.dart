@@ -1,14 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:mae_assignment/user/userDashboard.dart';
 import 'firebase_options.dart';
+import 'package:provider/provider.dart';
 
+// Screens
 import 'auth/login.dart';
 import 'auth/create_account.dart';
+import 'admin/admin_dashboard.dart';
+import 'home.dart'; // Optional, if you use it
+
+// Providers
+import 'providers/auth_provider.dart'; // You should create this if not yet created
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const MyApp());
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        // Add other providers here if needed
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -23,7 +40,14 @@ class MyApp extends StatelessWidget {
       title: 'Jambu',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(colorSchemeSeed: Colors.green, useMaterial3: true),
-      home: const LoginScreen(), // ← Set your login screen here
+      initialRoute: '/login',
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/signup': (context) => const CreateAccount(),
+        '/adminDashboard': (context) => const AdminDashboard(),
+        '/userDashboard': (context) => const UserDashboard(),
+        //'/home': (context) => const HomePage(), // optional
+      },
     );
   }
 }

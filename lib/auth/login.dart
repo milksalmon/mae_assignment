@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mae_assignment/services/auth_services.dart';
 import 'create_account.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -60,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
             const SizedBox(height: 20),
 
-            // 🔒 Password
+            //  Password
             TextField(
               controller: passwordController,
               obscureText: _obscurePassword,
@@ -85,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
             const SizedBox(height: 20),
 
-            // ✅ Login Button
+            //  Login Button
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -96,8 +99,48 @@ class _LoginScreenState extends State<LoginScreen> {
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
-                onPressed: () {
+                onPressed: () async {
                   // TODO: Handle login logic
+                  if (emailController.text.isEmpty &&
+                      passwordController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please enter credentials')),
+                    );
+                  } else {
+                    try {
+                      final auth = FirebaseAuth.instance;
+                      final firestore = FirebaseFirestore.instance;
+
+                      // LOGIN WITH EMAIL & PASSWORD
+                      final UserCredential = await auth
+                          .signInWithEmailAndPassword(
+                            email: emailController.text.trim(),
+                            password: passwordController.text.trim(),
+                          );
+                      final uid = UserCredential.user!.uid;
+
+                      //STEP 2: GET ROLE FROM FIRESTORE
+                      final userDoc =
+                          await firestore.collection('users').doc(uid).get();
+                      final role = userDoc.data()?['role'];
+
+                      //STEP 3 NAVIGATE BASED ON ROLE
+                      if (role == 'admin') {
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/adminDashboard',
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Access denied')),
+                        );
+                      }
+                    } on FirebaseAuthException catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.message ?? 'Login failed')),
+                      );
+                    }
+                  }
                 },
                 child: Text(
                   'Login',
@@ -137,9 +180,45 @@ class _LoginScreenState extends State<LoginScreen> {
               width: double.infinity,
               height: 50,
               child: OutlinedButton.icon(
-                onPressed: () {
-                  // TODO: Google Sign-In
+                onPressed: () async {
+                  UserCredential? user = await AuthService().signInWithGoogle();
+                  if (user != null) {
+                    final uid = user.user!.uid;
+
+                    final doc =
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(uid)
+                            .get();
+
+                    final role = doc.data()?['role'];
+
+                    // final firestore = FirebaseFirestore.instance;
+                    // final userDoc =
+                    //     await firestore.collection('users').doc(uid).get();
+                    // final role = userDoc.data()?['role'];
+
+                    if (role == 'admin') {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        '/adminDashboard',
+                      );
+                    } else if (role == 'user') {
+                      Navigator.pushReplacementNamed(context, '/userDashboard');
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Access denied: unknown role'),
+                        ),
+                      );
+                    }
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Google Sign-In failed')),
+                    );
+                  }
                 },
+
                 icon: Image.asset('assets/google.png', height: 24),
                 label: const Text('Sign in with Google'),
                 style: OutlinedButton.styleFrom(
@@ -177,12 +256,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   onPressed: () {
                     // TODO: Navigate to sign up
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const CreateAccount(),
-                      ),
-                    );
+                    Navigator.pushNamed(context, '/signup');
                   },
                   child: const Text('Sign Up'),
                 ),
