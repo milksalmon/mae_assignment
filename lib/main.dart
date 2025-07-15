@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:mae_assignment/admin/organiser_registration.dart';
 import 'package:mae_assignment/user/userDashboard.dart';
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
@@ -46,6 +47,7 @@ class MyApp extends StatelessWidget {
         '/signup': (context) => const CreateAccount(),
         '/adminDashboard': (context) => const AdminDashboard(),
         '/userDashboard': (context) => const UserDashboard(),
+        '/organiserRegister': (context) => const OrganiserRegistration(),
         //'/home': (context) => const HomePage(), // optional
       },
     );

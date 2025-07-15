@@ -101,6 +101,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 onPressed: () async {
                   // TODO: Handle login logic
+                  final email = emailController.text.trim();
+                  final password = passwordController.text.trim();
+
                   if (emailController.text.isEmpty &&
                       passwordController.text.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -129,6 +132,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         Navigator.pushReplacementNamed(
                           context,
                           '/adminDashboard',
+                        );
+                      } else if (role == 'user') {
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/userDashboard',
                         );
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
