@@ -15,6 +15,12 @@ class _AdminDashboard extends State<AdminDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: Image.asset('assets/logo.png', height: 50),
+          onPressed: () {
+            Navigator.pushNamed(context, '/adminDashboard');
+          },
+        ),
         title: const Text('Admin Dashboard'),
         actions: [
           IconButton(
@@ -23,13 +29,6 @@ class _AdminDashboard extends State<AdminDashboard> {
             onPressed: () {
               // PUSH REPLACEMENT NAMED = DONT ALLOW USER TO GO BACK TO PREVIOUS SCREEN
               Navigator.pushReplacementNamed(context, '/login');
-            },
-          ),
-          IconButton(
-            icon: Image.asset('assets/logo.png', height: 24),
-            onPressed: () {
-              // ALLOW USER TO GO BACK TO PREVIOUS SCREEN
-              Navigator.pushNamed(context, '/adminDashboard');
             },
           ),
         ],
@@ -99,7 +98,7 @@ class _AdminDashboard extends State<AdminDashboard> {
                 padding: const EdgeInsets.symmetric(vertical: 50),
               ),
               onPressed: () {
-                print('Button 3 Pressed');
+                Navigator.pushNamed(context, '/manageFeedback');
               },
               child: Text(
                 'Manage Feedback',

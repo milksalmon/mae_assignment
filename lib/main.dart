@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:mae_assignment/admin/manage_feedback.dart';
 import 'package:mae_assignment/admin/organiser_registration.dart';
 import 'package:mae_assignment/user/userDashboard.dart';
 import 'firebase_options.dart';
@@ -48,6 +49,7 @@ class MyApp extends StatelessWidget {
         '/adminDashboard': (context) => const AdminDashboard(),
         '/userDashboard': (context) => const UserDashboard(),
         '/organiserRegister': (context) => const OrganiserRegistration(),
+        '/manageFeedback': (context) => const ManageFeedback(),
         //'/home': (context) => const HomePage(), // optional
       },
     );
