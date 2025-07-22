@@ -128,7 +128,7 @@ class EventCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
             child: Image.asset(
-              'assets/ifood_banner.jpg', // Replace with your image asset
+              'assets/EXPOEVENT.png', // Replace with your image asset
               height: 160,
               width: double.infinity,
               fit: BoxFit.cover,
