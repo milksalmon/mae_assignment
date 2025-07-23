@@ -2,40 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
-// class UserDashboard extends StatefulWidget {
-//   const UserDashboard({super.key});
-
-//   @override
-//   State<UserDashboard> createState() => _UserDashboard();
-// }
-
-// class _UserDashboard extends State<UserDashboard> {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('User Dashboard'),
-//         actions: [
-//           IconButton(
-//             icon: Icon(Icons.logout),
-//             tooltip: 'Logout',
-//             onPressed: () {
-//               // TODO: Added logic to signing out and destroy session
-
-//               Navigator.pushNamed(context, '/login');
-//             },
-//           ),
-//         ],
-//       ),
-//       body: const Center(
-//         child: Text(
-//           'Test',
-//           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-//         ),
-//       ),
-//     );
-//   }
-// }
 
 class UserDashboard extends StatefulWidget {
   const UserDashboard({super.key});
@@ -43,72 +9,183 @@ class UserDashboard extends StatefulWidget {
   @override
   State<UserDashboard> createState() => _UserDashboard();
 }
+class _SavedTab extends StatefulWidget{
+  const _SavedTab();
+
+  @override
+  State<_SavedTab> createState() => _SavedTabState();
+
+}
+
+class _ReminderTab extends StatefulWidget {
+  const _ReminderTab();
+
+  @override
+  State<_ReminderTab> createState() => _ReminderTabState();
+
+
+}
+
+class _AccountTab extends StatefulWidget {
+  const _AccountTab();
+
+  @override
+  State<_AccountTab> createState() => _AccountTabState();
+}
+
+class _SavedTabState extends State<_SavedTab> {
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Center(child: Text('Saved', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
+      ],
+    );
+  }
+}
+
+class _ReminderTabState extends State<_ReminderTab> {
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Account info, settings, log out button, etc.
+        Center(child: Text('Reminder', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
+      ],
+    );
+  }
+
+}
+
+
+class _AccountTabState extends State<_AccountTab> {
+  // Add state, async calls, etc. here
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Center(child: Text('Saved', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
+        // Account info, settings, log out button, etc.
+      ],
+    );
+  }
+}
+
 
 class _UserDashboard extends State<UserDashboard> {
+  int _selectedIndex = 0;
+
+  static const List<Widget> _widgetOptions = <Widget>[
+    _HomeTab(),
+    _SavedTab(),
+    _ReminderTab(),
+    _AccountTab(),
+  ];
+
+
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white70,
-        backgroundColor: Colors.green,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.bookmark), label: "Saved"),
-          BottomNavigationBarItem(icon: Icon(Icons.alarm), label: "Reminder"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onItemTapped,
+        indicatorColor: Colors.green,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: "Home",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.bookmark_outline),
+            selectedIcon: Icon(Icons.bookmark),
+            label: "Saved",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.alarm_outlined),
+            selectedIcon: Icon(Icons.alarm),
+            label: "Reminder",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: "Account",
+          ),
         ],
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
-          child: Column(
+        child: _widgetOptions[_selectedIndex],
+      ),
+    );
+  }
+}
+
+class _HomeTab extends StatefulWidget {
+  const _HomeTab();
+
+  @override
+  State<_HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<_HomeTab> {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+      child: Column(
+        children: [
+          // Search bar with filter icon
+          Row(
             children: [
-              // Search bar with filter icon
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Search events...',
-                        prefixIcon: Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24.0),
-                        ),
-                      ),
+              Expanded(
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search events...',
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24.0),
                     ),
                   ),
-                  SizedBox(width: 10),
-                  Icon(Icons.filter_alt_outlined),
-                ],
-              ),
-              SizedBox(height: 16),
-              // Location
-              Row(
-                children: const [
-                  Icon(Icons.location_on_outlined),
-                  SizedBox(width: 4),
-                  Text('Events in ', style: TextStyle(fontSize: 16)),
-                  Text('Kuala Lumpur',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green)),
-                ],
-              ),
-              SizedBox(height: 16),
-              // Event list
-              Expanded(
-                child: ListView.builder(
-                  itemCount: 2,
-                  itemBuilder: (context, index) => EventCard(),
                 ),
-              )
+              ),
+              SizedBox(width: 10),
+              Icon(Icons.filter_alt_outlined),
             ],
           ),
-        ),
+          SizedBox(height: 16),
+          // Location
+          Row(
+            children: const [
+              Icon(Icons.location_on_outlined),
+              SizedBox(width: 4),
+              Text('Events in ', style: TextStyle(fontSize: 16)),
+              Text('Kuala Lumpur',
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green)),
+            ],
+          ),
+          SizedBox(height: 16),
+          // Event list
+          Expanded(
+            child: ListView.builder(
+              itemCount: 2,
+              itemBuilder: (context, index) => EventCard(),
+            ),
+          )
+        ],
       ),
     );
   }
