@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 
 class UserDashboard extends StatefulWidget {
@@ -182,7 +183,7 @@ class _HomeTabState extends State<_HomeTab> {
           Expanded(
             child: ListView.builder(
               itemCount: 2,
-              itemBuilder: (context, index) => EventCard(),
+              itemBuilder: (context, index) => EventCard(imageName: 'EXPOEVENT.png'),
             ),
           )
         ],
@@ -191,7 +192,35 @@ class _HomeTabState extends State<_HomeTab> {
   }
 }
 
-class EventCard extends StatelessWidget {
+class EventCard extends StatefulWidget {
+  final String imageName;
+  const EventCard({this.imageName = 'EXPOEVENT.png', Key? key}) : super(key: key);
+
+  @override
+  State<EventCard> createState() => _EventCardState();
+}
+
+class _EventCardState extends State<EventCard> {
+  String? imageUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadImage();
+  }
+
+  Future<void> _loadImage() async {
+    try {
+      final ref = FirebaseStorage.instance.ref().child('event_images/${widget.imageName}');
+      final url = await ref.getDownloadURL();
+      setState(() {
+        imageUrl = url;
+      });
+    } catch (e) {
+      // Optionally handle error, e.g. set a default imageUrl or log
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -204,12 +233,18 @@ class EventCard extends StatelessWidget {
           // Image section
           ClipRRect(
             borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.asset(
-              'assets/EXPOEVENT.png', // Replace with your image asset
-              height: 160,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
+            child: imageUrl == null
+                ? Container(
+                    height: 160,
+                    color: Colors.grey[300],
+                    child: const Center(child: CircularProgressIndicator()),
+                  )
+                : Image.network(
+                    imageUrl!,
+                    height: 160,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
           ),
           // Info section
           Padding(
