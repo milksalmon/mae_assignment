@@ -29,6 +29,19 @@ Future<void> main() async {
     print('FCM Token is:' + apnsToken);
   } 
 
+  FirebaseMessaging.instance.onTokenRefresh
+    .listen((fcmToken) {
+      // TODO: If necessary send token to application server.
+
+      // Note: This callback is fired at each app startup and whenever a new
+      // token is generated.
+    })
+    .onError((err) {
+      // Error getting token.
+    });
+
+    await FirebaseMessaging.instance.setAutoInitEnabled(true);
+
   runApp(
     MultiProvider(
       providers: [
