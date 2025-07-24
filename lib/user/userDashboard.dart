@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -60,17 +61,111 @@ class _ReminderTabState extends State<_ReminderTab> {
 
 }
 
-
+// Account Widgets
 class _AccountTabState extends State<_AccountTab> {
   // Add state, async calls, etc. here
 
-  @override
+ @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Center(child: Text('Saved', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
-        // Account info, settings, log out button, etc.
-      ],
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: 10),
+          const Text(
+            "Account Details",
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 20),
+          CircleAvatar(
+            radius: 50,
+            backgroundColor: Colors.grey[300],
+            child: const Icon(Icons.person, size: 50, color: Colors.grey),
+          ),
+          const SizedBox(height: 10),
+          const Text("Mr Kun", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          const Text("abc5022@gmail.com", style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 16),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("0 Following", style: TextStyle(fontWeight: FontWeight.bold)),
+              SizedBox(width: 20),
+              Text("0 Followers", style: TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+            ),
+            child: const Text("Edit Profile"),
+          ),
+          const SizedBox(height: 30, width: double.infinity),
+          sectionTitle("Preferences"),
+          ListTile(
+            leading: const Icon(Icons.dark_mode),
+            title: const Text("Dark Mode"),
+            trailing: Switch(value: false, onChanged: (_) {}),
+          ),
+          sectionTitle("Connected Accounts"),
+          ListTile(
+            leading: Image.asset("assets/google.png", height: 24), // Replace with your asset
+            title: const Text("Google\njohndoe221@gmail.com", style: TextStyle(height: 1.5)),
+            trailing: TextButton(onPressed: () {}, child: const Text("Disconnect")),
+          ),
+          ListTile(
+            leading: const Icon(Icons.apple),
+            title: const Text("Apple"),
+            trailing: TextButton(onPressed: () {}, child: const Text("Connect")),
+          ),
+          sectionTitle("Rules & Regulations"),
+          ListTile(
+            leading: const Icon(Icons.description_outlined),
+            title: const Text("Privacy Policy"),
+            onTap: () {},
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                await FirebaseAuth.instance.signOut();
+                Navigator.pushReplacementNamed(context, '/login');
+              } catch (e) {
+                print('Sign out failed, Error: $e');
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+            ),
+            child: const Text("Sign Out"),
+          ),
+          const SizedBox(height: 30),
+        ],
+      ),
+    );
+  }
+
+  Widget sectionTitle(String title) {
+    return Container(
+      alignment: Alignment.centerLeft,
+      margin: const EdgeInsets.only(top: 20, bottom: 8),
+
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.pinkAccent,
+      ),
+      child: Text(
+        title,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+      ),
     );
   }
 }
@@ -182,7 +277,7 @@ class _HomeTabState extends State<_HomeTab> {
           // Event list
           Expanded(
             child: ListView.builder(
-              itemCount: 2,
+              itemCount: 5,
               itemBuilder: (context, index) => EventCard(imageName: 'EXPOEVENT.png'),
             ),
           )
@@ -224,6 +319,7 @@ class _EventCardState extends State<EventCard> {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: Color(0xFFF9FDF0),
       margin: const EdgeInsets.symmetric(vertical: 8),
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -294,7 +390,7 @@ class EventTag extends StatelessWidget {
       margin: EdgeInsets.only(right: 6),
       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.pinkAccent.shade100,
+        color: Colors.pinkAccent,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
