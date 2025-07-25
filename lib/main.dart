@@ -10,6 +10,7 @@ import 'auth/login.dart';
 import 'auth/create_account.dart';
 import 'admin/admin_dashboard.dart';
 import 'home.dart';
+import 'user/event_page.dart';
 
 // Providers
 import 'providers/auth_provider.dart'; // You should create this if not yet created
@@ -71,6 +72,7 @@ class MyApp extends StatelessWidget {
         '/signup': (context) => const CreateAccount(),
         '/adminDashboard': (context) => const AdminDashboard(),
         '/userDashboard': (context) => const UserDashboard(),
+        '/event_page': (context) => const EventPage(),
         //'/home': (context) => const HomePage(), // optional
       },
     );

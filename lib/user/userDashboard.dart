@@ -4,19 +4,18 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
-
 class UserDashboard extends StatefulWidget {
   const UserDashboard({super.key});
 
   @override
   State<UserDashboard> createState() => _UserDashboard();
 }
-class _SavedTab extends StatefulWidget{
+
+class _SavedTab extends StatefulWidget {
   const _SavedTab();
 
   @override
   State<_SavedTab> createState() => _SavedTabState();
-
 }
 
 class _ReminderTab extends StatefulWidget {
@@ -24,8 +23,6 @@ class _ReminderTab extends StatefulWidget {
 
   @override
   State<_ReminderTab> createState() => _ReminderTabState();
-
-
 }
 
 class _AccountTab extends StatefulWidget {
@@ -36,36 +33,43 @@ class _AccountTab extends StatefulWidget {
 }
 
 class _SavedTabState extends State<_SavedTab> {
-
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Center(child: Text('Saved', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
+        Center(
+          child: Text(
+            'Saved',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+        ),
       ],
     );
   }
 }
 
 class _ReminderTabState extends State<_ReminderTab> {
-
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         // Account info, settings, log out button, etc.
-        Center(child: Text('Reminder', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
+        Center(
+          child: Text(
+            'Reminder',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+        ),
       ],
     );
   }
-
 }
 
 // Account Widgets
 class _AccountTabState extends State<_AccountTab> {
   // Add state, async calls, etc. here
 
- @override
+  @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -84,16 +88,25 @@ class _AccountTabState extends State<_AccountTab> {
             child: const Icon(Icons.person, size: 50, color: Colors.grey),
           ),
           const SizedBox(height: 10),
-          const Text("Mr Kun", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text(
+            "Mr Kun",
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 4),
           const Text("abc5022@gmail.com", style: TextStyle(color: Colors.grey)),
           const SizedBox(height: 16),
           const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("0 Following", style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                "0 Following",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               SizedBox(width: 20),
-              Text("0 Followers", style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                "0 Followers",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -101,7 +114,9 @@ class _AccountTabState extends State<_AccountTab> {
             onPressed: () {},
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
             ),
             child: const Text("Edit Profile"),
@@ -115,14 +130,26 @@ class _AccountTabState extends State<_AccountTab> {
           ),
           sectionTitle("Connected Accounts"),
           ListTile(
-            leading: Image.asset("assets/google.png", height: 24), // Replace with your asset
-            title: const Text("Google\njohndoe221@gmail.com", style: TextStyle(height: 1.5)),
-            trailing: TextButton(onPressed: () {}, child: const Text("Disconnect")),
+            leading: Image.asset(
+              "assets/google.png",
+              height: 24,
+            ), // Replace with your asset
+            title: const Text(
+              "Google\njohndoe221@gmail.com",
+              style: TextStyle(height: 1.5),
+            ),
+            trailing: TextButton(
+              onPressed: () {},
+              child: const Text("Disconnect"),
+            ),
           ),
           ListTile(
             leading: const Icon(Icons.apple),
             title: const Text("Apple"),
-            trailing: TextButton(onPressed: () {}, child: const Text("Connect")),
+            trailing: TextButton(
+              onPressed: () {},
+              child: const Text("Connect"),
+            ),
           ),
           sectionTitle("Rules & Regulations"),
           ListTile(
@@ -142,7 +169,9 @@ class _AccountTabState extends State<_AccountTab> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
             ),
             child: const Text("Sign Out"),
@@ -159,17 +188,18 @@ class _AccountTabState extends State<_AccountTab> {
       margin: const EdgeInsets.only(top: 20, bottom: 8),
 
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.pinkAccent,
-      ),
+      decoration: BoxDecoration(color: Colors.pinkAccent),
       child: Text(
         title,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
       ),
     );
   }
 }
-
 
 class _UserDashboard extends State<UserDashboard> {
   int _selectedIndex = 0;
@@ -180,8 +210,6 @@ class _UserDashboard extends State<UserDashboard> {
     _ReminderTab(),
     _AccountTab(),
   ];
-
-
 
   void _onItemTapped(int index) {
     setState(() {
@@ -220,9 +248,7 @@ class _UserDashboard extends State<UserDashboard> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: _widgetOptions[_selectedIndex],
-      ),
+      body: SafeArea(child: _widgetOptions[_selectedIndex]),
     );
   }
 }
@@ -266,11 +292,14 @@ class _HomeTabState extends State<_HomeTab> {
               Icon(Icons.location_on_outlined),
               SizedBox(width: 4),
               Text('Events in ', style: TextStyle(fontSize: 16)),
-              Text('Kuala Lumpur',
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green)),
+              Text(
+                'Kuala Lumpur',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
             ],
           ),
           SizedBox(height: 16),
@@ -278,9 +307,10 @@ class _HomeTabState extends State<_HomeTab> {
           Expanded(
             child: ListView.builder(
               itemCount: 5,
-              itemBuilder: (context, index) => EventCard(imageName: 'EXPOEVENT.png'),
+              itemBuilder:
+                  (context, index) => EventCard(imageName: 'EXPOEVENT.png'),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -289,7 +319,8 @@ class _HomeTabState extends State<_HomeTab> {
 
 class EventCard extends StatefulWidget {
   final String imageName;
-  const EventCard({this.imageName = 'EXPOEVENT.png', Key? key}) : super(key: key);
+  const EventCard({this.imageName = 'EXPOEVENT.png', Key? key})
+    : super(key: key);
 
   @override
   State<EventCard> createState() => _EventCardState();
@@ -306,7 +337,9 @@ class _EventCardState extends State<EventCard> {
 
   Future<void> _loadImage() async {
     try {
-      final ref = FirebaseStorage.instance.ref().child('event_images/${widget.imageName}');
+      final ref = FirebaseStorage.instance.ref().child(
+        'event_images/${widget.imageName}',
+      );
       final url = await ref.getDownloadURL();
       setState(() {
         imageUrl = url;
@@ -318,62 +351,71 @@ class _EventCardState extends State<EventCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Color(0xFFF9FDF0),
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image section
-          ClipRRect(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-            child: imageUrl == null
-                ? Container(
-                    height: 160,
-                    color: Colors.grey[300],
-                    child: const Center(child: CircularProgressIndicator()),
-                  )
-                : Image.network(
-                    imageUrl!,
-                    height: 160,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
+    return InkWell(
+      onTap: () {
+        Navigator.pushNamed(context, '/event_page');
+      },
+      child: Card(
+        color: Color(0xFFF9FDF0),
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image section
+            ClipRRect(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+              child:
+                  imageUrl == null
+                      ? Container(
+                        height: 160,
+                        color: Colors.grey[300],
+                        child: const Center(child: CircularProgressIndicator()),
+                      )
+                      : Image.network(
+                        imageUrl!,
+                        height: 160,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+            ),
+            // Info section
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Fri, 11th July, 2:30pm',
+                    style: TextStyle(color: Colors.red),
                   ),
-          ),
-          // Info section
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Fri, 11th July, 2:30pm',
-                    style: TextStyle(color: Colors.red)),
-                SizedBox(height: 4),
-                RichText(
-                  text: TextSpan(
-                    style: TextStyle(color: Colors.black),
-                    children: const [
-                      TextSpan(
+                  SizedBox(height: 4),
+                  RichText(
+                    text: TextSpan(
+                      style: TextStyle(color: Colors.black),
+                      children: const [
+                        TextSpan(
                           text: 'Expo iFood',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      TextSpan(text: ' by Pavillion Bukit Jalil'),
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(text: ' by Pavillion Bukit Jalil'),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    children: const [
+                      EventTag(label: "Coffee"),
+                      EventTag(label: "Japanese Food"),
+                      EventTag(label: "Pastry"),
                     ],
                   ),
-                ),
-                SizedBox(height: 8),
-                Row(
-                  children: const [
-                    EventTag(label: "Coffee"),
-                    EventTag(label: "Japanese Food"),
-                    EventTag(label: "Pastry"),
-                  ],
-                )
-              ],
+                ],
+              ),
             ),
-          )
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -393,10 +435,7 @@ class EventTag extends StatelessWidget {
         color: Colors.pinkAccent,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 12, color: Colors.white),
-      ),
+      child: Text(label, style: TextStyle(fontSize: 12, color: Colors.white)),
     );
   }
 }
