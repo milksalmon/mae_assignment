@@ -129,6 +129,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           context,
                           '/adminDashboard',
                         );
+                      } else if (role == 'user') {
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/userDashboard',
+                        );
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Access denied')),

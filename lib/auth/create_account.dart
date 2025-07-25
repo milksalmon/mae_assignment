@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../organiser/orgRegistration.dart';
 import '../user/userDashboard.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CreateAccount extends StatefulWidget {
   const CreateAccount({super.key});
@@ -18,7 +20,7 @@ class _CreateAccountState extends State<CreateAccount> {
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
-  void _createAccount() {
+  void _createAccount() async {
     if (_formKey.currentState!.validate()) {
       if (passwordController.text != confirmPasswordController.text) {
         ScaffoldMessenger.of(
@@ -26,6 +28,37 @@ class _CreateAccountState extends State<CreateAccount> {
         ).showSnackBar(const SnackBar(content: Text("Passwords do not match")));
         return;
       }
+ try {
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      await userCredential.user?.updateDisplayName(
+        '${firstNameController.text} ${lastNameController.text}',
+      );
+
+      // Save to Firestore
+      await FirebaseFirestore.instance.collection('users').doc(userCredential.user?.uid).set({
+        'firstName': firstNameController.text.trim(),
+        'lastName': lastNameController.text.trim(),
+        'email': emailController.text.trim(),
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Account created!')),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const UserDashboard()),
+      );
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? 'Registration failed')),
+      );
+    }
 
       // Account creation logic
       print('First Name: ${firstNameController.text}');

@@ -1,14 +1,16 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:mae_assignment/user/userDashboard.dart';
-import 'firebase_options.dart';
 import 'package:provider/provider.dart';
+import 'firebase_options.dart';
 
-// Screens
+// screens
+import 'user/userDashboard.dart';
 import 'auth/login.dart';
 import 'auth/create_account.dart';
 import 'admin/admin_dashboard.dart';
-import 'home.dart'; // Optional, if you use it
+import 'home.dart';
+import 'user/event_page.dart';
 
 // Providers
 import 'providers/auth_provider.dart'; // You should create this if not yet created
@@ -16,6 +18,30 @@ import 'providers/auth_provider.dart'; // You should create this if not yet crea
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // You may set the permission requests to "provisional" which allows the user to choose what type
+  // of notifications they would like to receive once the user receives a notification.
+  final notificationSettings = await FirebaseMessaging.instance.requestPermission(provisional: true);
+
+  // For apple platforms, ensure the APNS token is available before making any FCM plugin API calls
+  final apnsToken = await FirebaseMessaging.instance.getToken();
+  if (apnsToken != null) {
+  // APNS token is available, make FCM plugin API requests...
+    print('FCM Token is:' + apnsToken);
+  } 
+
+  FirebaseMessaging.instance.onTokenRefresh
+    .listen((fcmToken) {
+      // TODO: If necessary send token to application server.
+
+      // Note: This callback is fired at each app startup and whenever a new
+      // token is generated.
+    })
+    .onError((err) {
+      // Error getting token.
+    });
+
+    await FirebaseMessaging.instance.setAutoInitEnabled(true);
 
   runApp(
     MultiProvider(
@@ -50,6 +76,7 @@ class MyApp extends StatelessWidget {
         '/signup': (context) => const CreateAccount(),
         '/adminDashboard': (context) => const AdminDashboard(),
         '/userDashboard': (context) => const UserDashboard(),
+        '/event_page': (context) => const EventPage(),
         //'/home': (context) => const HomePage(), // optional
       },
     );
