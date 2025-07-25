@@ -244,7 +244,7 @@ class _UserDashboard extends State<UserDashboard> {
     return Scaffold(
       backgroundColor: Colors.white,
       bottomNavigationBar: NavigationBar(
-        backgroundColor: const Color(0xFFFFFFFF),
+        backgroundColor: const Color(0xFFECEFE6),
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,
         indicatorColor: Colors.green,
