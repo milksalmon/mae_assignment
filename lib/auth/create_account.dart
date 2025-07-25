@@ -36,13 +36,13 @@ class _CreateAccountState extends State<CreateAccount> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Account created!')));
-    }
 
-    // Navigate to dashboard
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const UserDashboard()),
-    );
+      // Navigate to dashboard
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const UserDashboard()),
+      );
+    }
   }
 
   @override
