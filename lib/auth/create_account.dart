@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-// import '../organiser/organiser_registration.dart';
+import '../organiser/orgRegistration.dart';
+import '../user/userDashboard.dart';
 
 class CreateAccount extends StatefulWidget {
   const CreateAccount({super.key});
@@ -36,6 +37,12 @@ class _CreateAccountState extends State<CreateAccount> {
         context,
       ).showSnackBar(const SnackBar(content: Text('Account created!')));
     }
+
+    // Navigate to dashboard
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const UserDashboard()),
+    );
   }
 
   @override
@@ -145,6 +152,7 @@ class _CreateAccountState extends State<CreateAccount> {
                     backgroundColor: Colors.green,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
+
                   child: Text(
                     'Sign Up',
                     style: GoogleFonts.montserrat(
@@ -157,12 +165,12 @@ class _CreateAccountState extends State<CreateAccount> {
                 const SizedBox(height: 20), // spacing
                 TextButton(
                   onPressed: () {
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder: (context) => const OrganiserRegister(),
-                    //   ),
-                    // );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const OrganiserRegister(),
+                      ),
+                    );
                   },
                   child: Text(
                     'Register as an Event Organiser',
