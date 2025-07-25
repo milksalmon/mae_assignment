@@ -71,6 +71,10 @@ class _AccountTabState extends State<_AccountTab> {
 
   @override
   Widget build(BuildContext context) {
+    final googleUser = FirebaseAuth.instance.currentUser;
+    final googleName = googleUser?.displayName ?? 'No name';
+    final googleEmail = googleUser?.email ?? 'No email';
+    final googlePhotoUrl = googleUser?.photoURL ?? 'No photo';
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Column(
@@ -84,16 +88,17 @@ class _AccountTabState extends State<_AccountTab> {
           const SizedBox(height: 20),
           CircleAvatar(
             radius: 50,
-            backgroundColor: Colors.grey[300],
-            child: const Icon(Icons.person, size: 50, color: Colors.grey),
+            backgroundColor: Colors.grey,
+            backgroundImage: googlePhotoUrl != null ? NetworkImage(googlePhotoUrl) : null,
+            child: googlePhotoUrl == null
+                ? const Icon(Icons.person, size: 50, color: Colors.grey)
+                : null,
           ),
           const SizedBox(height: 10),
-          const Text(
-            "Mr Kun",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Text(googleName, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
-          const Text("abc5022@gmail.com", style: TextStyle(color: Colors.grey)),
+          Text(googleEmail, style: const TextStyle(color: Colors.grey)),
           const SizedBox(height: 16),
           const Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -102,11 +107,11 @@ class _AccountTabState extends State<_AccountTab> {
                 "0 Following",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              SizedBox(width: 20),
-              Text(
-                "0 Followers",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+              // SizedBox(width: 20),
+              // Text(
+              //   "0 Followers",
+              //   style: TextStyle(fontWeight: FontWeight.bold),
+              // ),
             ],
           ),
           const SizedBox(height: 20),
@@ -128,29 +133,35 @@ class _AccountTabState extends State<_AccountTab> {
             title: const Text("Dark Mode"),
             trailing: Switch(value: false, onChanged: (_) {}),
           ),
+          Divider(),
+          ListTile(
+            leading: const Icon(Icons.workspaces),
+            title: const Text("Followed Organisers"),
+
+          ),
           sectionTitle("Connected Accounts"),
           ListTile(
             leading: Image.asset(
               "assets/google.png",
               height: 24,
             ), // Replace with your asset
-            title: const Text(
-              "Google\njohndoe221@gmail.com",
-              style: TextStyle(height: 1.5),
+            title: Text(
+              "Google\n$googleEmail",
+              style: const TextStyle(height: 1.5),
             ),
             trailing: TextButton(
               onPressed: () {},
               child: const Text("Disconnect"),
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.apple),
-            title: const Text("Apple"),
-            trailing: TextButton(
-              onPressed: () {},
-              child: const Text("Connect"),
-            ),
-          ),
+          // ListTile(
+          //   leading: const Icon(Icons.apple),
+          //   title: const Text("Apple"),
+          //   trailing: TextButton(
+          //     onPressed: () {},
+          //     child: const Text("Connect"),
+          //   ),
+          // ),
           sectionTitle("Rules & Regulations"),
           ListTile(
             leading: const Icon(Icons.description_outlined),
@@ -185,7 +196,7 @@ class _AccountTabState extends State<_AccountTab> {
   Widget sectionTitle(String title) {
     return Container(
       alignment: Alignment.centerLeft,
-      margin: const EdgeInsets.only(top: 20, bottom: 8),
+      margin: const EdgeInsets.only(top: 8, bottom: 8),
 
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(color: Colors.pinkAccent),
@@ -198,6 +209,16 @@ class _AccountTabState extends State<_AccountTab> {
         ),
       ),
     );
+  }
+
+  Widget Divider() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: double.infinity, vertical: 0.5),
+      decoration: BoxDecoration(color: Colors.grey),
+
+
+    );
+
   }
 }
 
