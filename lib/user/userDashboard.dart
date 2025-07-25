@@ -89,13 +89,17 @@ class _AccountTabState extends State<_AccountTab> {
           CircleAvatar(
             radius: 50,
             backgroundColor: Colors.grey,
-            backgroundImage: googlePhotoUrl != null ? NetworkImage(googlePhotoUrl) : null,
-            child: googlePhotoUrl == null
-                ? const Icon(Icons.person, size: 50, color: Colors.grey)
-                : null,
+            backgroundImage:
+                googlePhotoUrl != null ? NetworkImage(googlePhotoUrl) : null,
+            child:
+                googlePhotoUrl == null
+                    ? const Icon(Icons.person, size: 50, color: Colors.grey)
+                    : null,
           ),
           const SizedBox(height: 10),
-          Text(googleName, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Text(
+            googleName,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(googleEmail, style: const TextStyle(color: Colors.grey)),
@@ -137,7 +141,6 @@ class _AccountTabState extends State<_AccountTab> {
           ListTile(
             leading: const Icon(Icons.workspaces),
             title: const Text("Followed Organisers"),
-
           ),
           sectionTitle("Connected Accounts"),
           ListTile(
@@ -213,12 +216,12 @@ class _AccountTabState extends State<_AccountTab> {
 
   Widget Divider() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: double.infinity, vertical: 0.5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: double.infinity,
+        vertical: 0.5,
+      ),
       decoration: BoxDecoration(color: Colors.grey),
-
-
     );
-
   }
 }
 
@@ -243,6 +246,7 @@ class _UserDashboard extends State<UserDashboard> {
     return Scaffold(
       backgroundColor: Colors.white,
       bottomNavigationBar: NavigationBar(
+        backgroundColor: const Color(0xFFECEFE6),
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,
         indicatorColor: Colors.green,

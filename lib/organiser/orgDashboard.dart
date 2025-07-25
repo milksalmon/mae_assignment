@@ -9,7 +9,13 @@ class OrganiserDashboard extends StatefulWidget {
 }
 
 class _OrganiserDashboardState extends State<OrganiserDashboard> {
-  int _currentIndex = 0;
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   final List<Widget> _pages = [
     Center(child: Text("Your Events")),
@@ -22,20 +28,23 @@ class _OrganiserDashboardState extends State<OrganiserDashboard> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Row(
-          children: [
-            Image.asset('assets/logo.png', height: 80, width: 80),
-            const SizedBox(width: 12),
-            // Welcome text
-            Text(
-              'Welcome',
-              style: GoogleFonts.montserrat(
-                color: Colors.black87,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
+        title: Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: Row(
+            children: [
+              Image.asset('assets/logo.png', height: 80, width: 80),
+              const SizedBox(width: 12),
+              // Welcome text
+              Text(
+                'Welcome',
+                style: GoogleFonts.montserrat(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       body: Center(
@@ -44,41 +53,28 @@ class _OrganiserDashboardState extends State<OrganiserDashboard> {
           style: GoogleFonts.montserrat(fontSize: 18),
         ),
       ),
-      bottomNavigationBar: Container(
-        color: Colors.green,
-        child: BottomNavigationBar(
-          selectedLabelStyle: GoogleFonts.montserrat(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+      bottomNavigationBar: NavigationBar(
+        backgroundColor: const Color(0xFFECEFE6),
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onItemTapped,
+        indicatorColor: Colors.green,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.event_outlined),
+            selectedIcon: Icon(Icons.event),
+            label: "Your Events",
           ),
-          unselectedLabelStyle: GoogleFonts.montserrat(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
+          NavigationDestination(
+            icon: Icon(Icons.notifications_outlined),
+            selectedIcon: Icon(Icons.notifications),
+            label: "Notifications",
           ),
-          backgroundColor: Colors.green,
-          selectedItemColor: const Color(0xFFFF2F67),
-          unselectedItemColor: Colors.white,
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          items: [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.event),
-              label: 'Your Events',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.notifications),
-              label: 'Notifications',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.account_circle),
-              label: 'Account',
-            ),
-          ],
-        ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: "Account",
+          ),
+        ],
       ),
     );
   }
