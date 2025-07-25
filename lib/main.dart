@@ -39,7 +39,11 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Jambu',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(colorSchemeSeed: Colors.green, useMaterial3: true),
+      theme: ThemeData(
+        colorSchemeSeed: Colors.green,
+        fontFamily: 'Montserrat',
+        useMaterial3: true,
+      ),
       initialRoute: '/login',
       routes: {
         '/login': (context) => const LoginScreen(),
