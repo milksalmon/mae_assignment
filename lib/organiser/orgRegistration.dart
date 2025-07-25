@@ -132,7 +132,20 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
                 },
               ),
               const SizedBox(height: 12),
-              _buildTextField('Password', _passwordController, obscure: true),
+              _buildTextField(
+                'Password',
+                _passwordController,
+                obscure: true,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your password';
+                  }
+                  if (value.length < 6) {
+                    return 'Password must be at least 6 characters';
+                  }
+                  return null;
+                },
+              ),
               const SizedBox(height: 12),
               _buildTextField(
                 'Confirm Password',
