@@ -46,6 +46,12 @@
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>UIStatusBarHidden</key>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>We need access to your files for uploading permit and SSM</string>
+		<key>NSDocumentsFolderUsageDescription</key>
+		<string>App needs access to documents</string>
+		<key>UIFileSharingEnabled</key>
+		<true/>
 		<false/>
 	</dict>
 </plist>
