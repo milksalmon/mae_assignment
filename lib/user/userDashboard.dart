@@ -35,12 +35,29 @@ class _AccountTab extends StatefulWidget {
 class _SavedTabState extends State<_SavedTab> {
   @override
   Widget build(BuildContext context) {
+    // Replace with your actual saved events data
+    final savedEvents = [
+      'EXPOEVENT.png',
+      'COFFEEFEST.png',
+      // Add more saved event image names here
+    ];
+
     return Column(
       children: [
-        Center(
-          child: Text(
-            'Saved',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        const SizedBox(height: 20),
+        const Text(
+          'Saved Events',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            child: ListView.builder(
+              itemCount: savedEvents.length,
+              itemBuilder: (context, index) {
+                return EventCard(imageName: savedEvents[index]);
+              },
+            ),
           ),
         ),
       ],
@@ -51,13 +68,39 @@ class _SavedTabState extends State<_SavedTab> {
 class _ReminderTabState extends State<_ReminderTab> {
   @override
   Widget build(BuildContext context) {
+    // Replace with your actual reminder data
+    final reminders = [
+      {'title': 'Expo iFood', 'date': 'Fri, 11th July, 2:30pm'},
+      {'title': 'Coffee Fest', 'date': 'Sat, 12th July, 10:00am'},
+    ];
+
     return Column(
       children: [
-        // Account info, settings, log out button, etc.
-        Center(
-          child: Text(
-            'Reminder',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        const SizedBox(height: 20),
+        const Text(
+          'My Reminders',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: reminders.length,
+            itemBuilder: (context, index) {
+              final reminder = reminders[index];
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                child: ListTile(
+                  leading: Icon(Icons.event_note, color: Colors.green),
+                  title: Text(reminder['title']!),
+                  subtitle: Text(reminder['date']!),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete, color: Colors.red),
+                    onPressed: () {
+                      // Remove reminder logic
+                    },
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],
@@ -89,13 +132,17 @@ class _AccountTabState extends State<_AccountTab> {
           CircleAvatar(
             radius: 50,
             backgroundColor: Colors.grey,
-            backgroundImage: googlePhotoUrl != null ? NetworkImage(googlePhotoUrl) : null,
-            child: googlePhotoUrl == null
-                ? const Icon(Icons.person, size: 50, color: Colors.grey)
-                : null,
+            backgroundImage:
+                googlePhotoUrl != null ? NetworkImage(googlePhotoUrl) : null,
+            child:
+                googlePhotoUrl == null
+                    ? const Icon(Icons.person, size: 50, color: Colors.grey)
+                    : null,
           ),
           const SizedBox(height: 10),
-          Text(googleName, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Text(
+            googleName,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(googleEmail, style: const TextStyle(color: Colors.grey)),
@@ -137,7 +184,6 @@ class _AccountTabState extends State<_AccountTab> {
           ListTile(
             leading: const Icon(Icons.workspaces),
             title: const Text("Followed Organisers"),
-
           ),
           sectionTitle("Connected Accounts"),
           ListTile(
@@ -214,12 +260,12 @@ class _AccountTabState extends State<_AccountTab> {
 
   Widget Divider() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: double.infinity, vertical: 0.5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: double.infinity,
+        vertical: 0.5,
+      ),
       decoration: BoxDecoration(color: Colors.grey),
-
-
     );
-
   }
 }
 
