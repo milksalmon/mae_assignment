@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class AuthProvider with ChangeNotifier {
+class AppAuthProvider with ChangeNotifier {
   String? _email;
 
   String? get email => _email;

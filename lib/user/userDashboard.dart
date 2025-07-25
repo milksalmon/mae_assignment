@@ -173,6 +173,7 @@ class _AccountTabState extends State<_AccountTab> {
             onPressed: () async {
               try {
                 await FirebaseAuth.instance.signOut();
+                Provider.of<AppAuthProvider>(context, listen: false).logout();
                 Navigator.pushReplacementNamed(context, '/login');
               } catch (e) {
                 print('Sign out failed, Error: $e');
@@ -243,6 +244,7 @@ class _UserDashboard extends State<UserDashboard> {
     return Scaffold(
       backgroundColor: Colors.white,
       bottomNavigationBar: NavigationBar(
+        backgroundColor: const Color(0xFFFFFFFF),
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,
         indicatorColor: Colors.green,
