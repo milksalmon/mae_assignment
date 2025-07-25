@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 // CREATING A STATEFUL WIDGET
 class ManageFeedback extends StatefulWidget {
@@ -21,6 +22,9 @@ class _ManageFeedback extends State<ManageFeedback> {
     fetchFeedbacks();
   }
 
+  // FUUNCTION FOR FOLDING FEEDBACK BY VENDOR
+  Map<String, bool> _expandedVendors = {}; // TO TRACK EXPANDED VENDORS
+
   String ratingFilter = '5 Ratings';
   final List<String> filters = [
     '5 Ratings',
@@ -36,6 +40,18 @@ class _ManageFeedback extends State<ManageFeedback> {
 
   List<Map<String, dynamic>> _ratingFilter = [];
   bool isLoading = true;
+
+  // PERFORM GROUPING BY VENDOR NAME
+  Map<String, List<Map<String, dynamic>>> _groupedFeedbacksByVendor() {
+    return _ratingFilter
+        .where((item) => item['rating'] == ratingFilter)
+        .fold<Map<String, List<Map<String, dynamic>>>>({}, (map, item) {
+          // DEFENSIVE FALLBACK TO 'Unknown Vendor' IF NOT FOUND ANY VENDOR
+          final vendor = item['vendor'] ?? 'Unknown Vendor';
+          map.putIfAbsent(vendor, () => []).add(item);
+          return map;
+        });
+  }
 
   // FETCHING FEEDBACK DATA FROM FIREBASE
   Future<void> fetchFeedbacks() async {
@@ -74,13 +90,21 @@ class _ManageFeedback extends State<ManageFeedback> {
         title: Row(
           children: [
             Image.asset('assets/logo.png', height: 50),
-            const SizedBox(width: 5),
-            const Text('Manage Feedback'),
+            //const SizedBox(width: 5),
+            Text(
+              'Manage Feedback',
+              style: GoogleFonts.montserrat(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
           ],
         ),
       ),
       body: Column(
         children: [
+          // FILTER DROP DOWN
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -123,67 +147,158 @@ class _ManageFeedback extends State<ManageFeedback> {
               ],
             ),
           ),
-
-          final groupedFeedbacks = _groupFeedbacksByVendor();
-
           Expanded(
             child:
                 isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : ListView(
                       children:
-                          groupedFeedbacks.entries.map((entry) {
+                          _groupedFeedbacksByVendor().entries.map((entry) {
                             final vendor = entry.key;
                             final feedbackList = entry.value;
+                            final isExpanded =
+                                _expandedVendors[vendor] ?? false;
 
                             return Column(
-                              crossAxisAlignment : CrossAxisAlignment.start,
-                              children[
-                                Padding(
-                                  padding:
-                                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                  child: Text(
-                                    vendor,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                //VENDOR HEADER
+                                ListTile(
+                                  title: Text(
+                                    'Vendor: $vendor',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: Colors.black,
                                       fontSize: 16,
                                     ),
                                   ),
-                                  ),
-                              ]
-                            )
-                          })
-                          _ratingFilter
-                              .where((item) => item['rating'] == ratingFilter)
-                              .map((item) {
-                                final id = item['id']; // UNIQUE IDENTIFIER
-                                return Card(
-                                  color: Colors.pink[100],
-                                  margin: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 6,
-                                  ),
-                                  child: ListTile(
-                                    leading: const CircleAvatar(
-                                      child: Icon(Icons.person),
+                                  trailing: IconButton(
+                                    icon: Icon(
+                                      isExpanded
+                                          ? Icons.expand_less
+                                          : Icons.expand_more,
                                     ),
-                                    title: Text(item['name'] ?? 'Unknown'),
-                                    subtitle: Text(item['comment'] ?? ''),
-                                    trailing: Checkbox(
-                                      value: _selectedFeedback[id] ?? false,
-                                      onChanged: (bool? value) {
-                                        setState(() {
-                                          _selectedFeedback[id] = value!;
-                                        });
-                                      },
-                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _expandedVendors[vendor] = !isExpanded;
+                                      });
+                                    },
                                   ),
-                                );
-                              })
-                              .toList(),
+                                ),
+
+                                // SHOW FEEDBACK ONLY IF EXPANDED
+                                if (isExpanded)
+                                  ...feedbackList.map((item) {
+                                    final id = item['id']; // UNIQUE IDENTIFIER
+                                    return Card(
+                                      color: Colors.pink[100],
+                                      margin: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 6,
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(12.0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                const CircleAvatar(
+                                                  child: Icon(Icons.person),
+                                                ),
+                                                const SizedBox(width: 10),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        item['name'] ??
+                                                            'Unknown',
+                                                        style: const TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      // REPLACING TEXT RATING WITH STARS
+                                                      RatingBarIndicator(
+                                                        rating:
+                                                            double.tryParse(
+                                                              item['rating']
+                                                                  .toString()
+                                                                  .split(
+                                                                    ' ',
+                                                                  )[0],
+                                                            ) ??
+                                                            0.0,
+                                                        itemBuilder:
+                                                            (
+                                                              context,
+                                                              index,
+                                                            ) => const Icon(
+                                                              Icons.star,
+                                                              color:
+                                                                  Colors.orange,
+                                                            ),
+                                                        itemCount: 5,
+                                                        itemSize: 16.0,
+                                                        direction:
+                                                            Axis.horizontal,
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        item['comment'] ?? '',
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                Checkbox(
+                                                  value:
+                                                      _selectedFeedback[id] ??
+                                                      false,
+                                                  onChanged: (bool? value) {
+                                                    setState(() {
+                                                      _selectedFeedback[id] =
+                                                          value!;
+                                                    });
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.spaceEvenly,
+                                              children: [
+                                                TextButton(
+                                                  onPressed: () {},
+                                                  child: const Text('Reply'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () {},
+                                                  child: const Text('Message'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () {},
+                                                  child: const Text('Send'),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                              ],
+                            );
+                          }).toList(),
                     ),
+            // END OF VENDOR FEEDBACK LIST
           ),
+          // END OF EXPANDED LIST VIEW
 
           // BOTTOM ACTION BAR
           Container(
@@ -193,19 +308,19 @@ class _ManageFeedback extends State<ManageFeedback> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildActionButton('Delete', Colors.red, () {
-                  print('Deleting selected comments');
+                  print('Delete Button clicked');
                 }),
                 _buildActionButton('Restrict', Colors.orange, () {
-                  print('Restricting selected users');
+                  print('Restrict Button clicked');
                 }),
                 _buildActionButton('Block', Colors.black, () {
-                  print('Blocking selected users');
+                  print('Block Button clicked');
                 }),
               ],
             ),
           ),
         ],
-      ), // ADDED : BOTTOM ACTION BAR
+      ),
     );
   }
 

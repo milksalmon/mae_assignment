@@ -21,7 +21,14 @@ class _AdminDashboard extends State<AdminDashboard> {
             Navigator.pushNamed(context, '/adminDashboard');
           },
         ),
-        title: const Text('Admin Dashboard'),
+        title: Text(
+          'Admin Dashboard',
+          style: GoogleFonts.montserrat(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.logout),
@@ -75,7 +82,7 @@ class _AdminDashboard extends State<AdminDashboard> {
                 padding: const EdgeInsets.symmetric(vertical: 50),
               ),
               onPressed: () {
-                print('Button 2 Pressed');
+                Navigator.pushNamed(context, '/OAM');
               },
               child: Text(
                 'Organizer Account Management',

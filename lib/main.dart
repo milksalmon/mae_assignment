@@ -11,6 +11,7 @@ import 'auth/login.dart';
 import 'auth/create_account.dart';
 import 'admin/admin_dashboard.dart';
 import 'home.dart'; // Optional, if you use it
+import 'admin/account_management.dart';
 
 // Providers
 import 'providers/auth_provider.dart'; // You should create this if not yet created
@@ -50,6 +51,7 @@ class MyApp extends StatelessWidget {
         '/userDashboard': (context) => const UserDashboard(),
         '/organiserRegister': (context) => const OrganiserRegistration(),
         '/manageFeedback': (context) => const ManageFeedback(),
+        '/OAM': (context) => const OrganizerAccountManagement(),
         //'/home': (context) => const HomePage(), // optional
       },
     );

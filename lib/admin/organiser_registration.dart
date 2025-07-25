@@ -51,8 +51,15 @@ class _OrganiserRegistration extends State<OrganiserRegistration> {
         title: Row(
           children: [
             Image.asset('assets/logo.png', height: 50),
-            const SizedBox(width: 5), // ADDING SPACE BETWEEN LOGO AND TEXT
-            const Text('Organiser Registration'),
+            //const SizedBox(width: 5), // ADDING SPACE BETWEEN LOGO AND TEXT
+            Text(
+              'Organiser Registration',
+              style: GoogleFonts.montserrat(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
           ],
         ),
       ),
