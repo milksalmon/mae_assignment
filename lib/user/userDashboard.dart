@@ -176,6 +176,7 @@ class _AccountTabState extends State<_AccountTab> {
             onPressed: () async {
               try {
                 await FirebaseAuth.instance.signOut();
+                Provider.of<AppAuthProvider>(context, listen: false).logout();
                 Navigator.pushReplacementNamed(context, '/login');
               } catch (e) {
                 print('Sign out failed, Error: $e');

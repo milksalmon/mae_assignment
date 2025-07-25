@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -46,7 +47,7 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => AppAuthProvider()),
         // Add other providers here if needed
       ],
       child: const MyApp(),
@@ -70,7 +71,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Montserrat',
         useMaterial3: true,
       ),
-      initialRoute: '/login',
+      //initialRoute: '/login',
       routes: {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const CreateAccount(),
@@ -79,6 +80,19 @@ class MyApp extends StatelessWidget {
         '/event_page': (context) => const EventPage(),
         //'/home': (context) => const HomePage(), // optional
       },
+      home: AuthGate(),
     );
+  }
+}
+
+class AuthGate extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return const LoginScreen();
+    } else {
+      return const UserDashboard();
+    }
   }
 }
