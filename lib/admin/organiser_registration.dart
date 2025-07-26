@@ -4,6 +4,10 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:io';
+import 'package:dio/dio.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
 
 class OrganiserRegistration extends StatefulWidget {
   const OrganiserRegistration({super.key});
@@ -208,7 +212,7 @@ Widget buildRequestCard({
           ),
           ...remarks.map((text) => Text(". $text")).toList(),
           const SizedBox(height: 10),
-          const Text('Lorem Ipsum Dolor Sit Amet'),
+          //const Text('Lorem Ipsum Dolor Sit Amet'),
           const SizedBox(height: 10),
           // FOR ATTACHMENT
           if (attachments != null && attachments.isNotEmpty) ...[
@@ -220,13 +224,74 @@ Widget buildRequestCard({
                       (_) => ListView(
                         children:
                             attachments.map((url) {
-                              final fileName =
-                                  url.split('/').last.split('?').first;
+                              final fileName = Uri.decodeFull(
+                                url.split('/').last.split('?').first,
+                              );
                               return ListTile(
                                 leading: const Icon(Icons.attach_file),
                                 title: Text(fileName),
                                 trailing: const Icon(Icons.download),
-                                onTap: () => onLaunchURL(url),
+                                onTap: () async {
+                                  Navigator.pop(context);
+                                  final status =
+                                      await Permission.storage.request();
+                                  // final path =
+                                  //     '${downloadsDir!.path}/$fileName';
+
+                                  if (status.isGranted) {
+                                    // final dir =
+                                    //     await getExternalStorageDirectory();
+
+                                    try {
+                                      final downloadsDir =
+                                          await getExternalStorageDirectories(
+                                            type: StorageDirectory.downloads,
+                                          );
+                                      if (downloadsDir == null ||
+                                          downloadsDir.isEmpty) {
+                                        throw 'Downloads directory not available';
+                                      }
+                                      final savePath =
+                                          '${downloadsDir.first.path}/$fileName';
+                                      await Dio().download(url, savePath);
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Downlaoded to $savePath',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Download failed: $e',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  } else {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Storage permission denied',
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
                               );
                             }).toList(),
                       ),

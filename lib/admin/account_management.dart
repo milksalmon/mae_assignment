@@ -16,11 +16,42 @@ class OrganizerAccountManagement extends StatefulWidget {
 
 class _OrganizerAccountManagementState
     extends State<OrganizerAccountManagement> {
+  String statusFilter = 'Approved';
+  final List<String> statuses = ['Suspend', 'Approved'];
+
   @override
   void initState() {
     super.initState();
     // Fetch organizer accounts from the provider or database
     _fetchOrganizerAccounts();
+  }
+
+  // TO UPDATE THE STATUS TO SUSPEND AND UNSUSPEND
+  Future<void> _updateStatusForSelected(String newStatus) async {
+    try {
+      final selectedIds =
+          _selectedOrganizers.entries
+              .where((entry) => entry.value)
+              .map((entry) => entry.key)
+              .toList();
+
+      for (String docId in selectedIds) {
+        await FirebaseFirestore.instance
+            .collection('organizers')
+            .doc(docId)
+            .update({'status': newStatus});
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Status updated to $newStatus.')));
+
+      await _fetchOrganizerAccounts(); // TO REFRESH
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to update status: $e')));
+    }
   }
 
   final Map<String, bool> _selectedOrganizers = {};
@@ -74,6 +105,46 @@ class _OrganizerAccountManagementState
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.blueGrey[100],
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  // DROP DOWN MENU
+                  child: DropdownButton<String>(
+                    value: statusFilter,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        statusFilter = newValue!;
+                        isLoading = true;
+                      });
+                      _fetchOrganizerAccounts();
+                    },
+                    items:
+                        statuses.map((status) {
+                          return DropdownMenuItem<String>(
+                            value: status,
+                            child: Text(
+                              'Status: $status',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                    dropdownColor: Colors.pink[100],
+                    style: const TextStyle(color: Colors.black),
+                    iconEnabledColor: Colors.black,
+                  ),
+                ),
+              ],
+            ),
             Expanded(
               child:
                   isLoading
@@ -96,6 +167,8 @@ class _OrganizerAccountManagementState
                             ratingBreakdown: Map<String, dynamic>.from(
                               org['ratingBreakdown'] ?? {},
                             ),
+                            docId: org['id'],
+                            onStatusChanged: _fetchOrganizerAccounts,
                           );
                         },
                       ),
@@ -118,8 +191,12 @@ class _OrganizerAccountManagementState
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                _buildActionButton('Suspend', Colors.black, () {
-                  print('Suspend Button Clicked');
+                _buildActionButton('Unsuspend', Colors.green, () async {
+                  await _updateStatusForSelected('Approved');
+                }),
+                const SizedBox(width: 10),
+                _buildActionButton('Suspend', Colors.red, () async {
+                  await _updateStatusForSelected('Suspend');
                 }),
               ],
             ),
@@ -143,7 +220,7 @@ class _OrganizerAccountManagementState
 
         // FILTER ONLY APPROVED ORGANIZERS
         if ((data['status'] ?? '').toString().trim().toLowerCase() !=
-            'approved') {
+            statusFilter.toLowerCase()) {
           continue;
         }
 
@@ -181,6 +258,7 @@ class _OrganizerAccountManagementState
       setState(() {
         _orgAcc = organizerList;
         isLoading = false;
+        _selectedOrganizers.clear();
       });
     } catch (e) {
       print('Error fetching organizer accounts: $e');
@@ -200,6 +278,8 @@ class _OrganizerAccountManagementState
     required List<String>? attachments,
     required void Function(String) onLaunchUrl,
     required Map<String, dynamic> ratingBreakdown,
+    required String docId,
+    required VoidCallback onStatusChanged,
   }) {
     return Card(
       color: const Color(0xFFFFE3E3),
@@ -226,10 +306,10 @@ class _OrganizerAccountManagementState
                   ),
                 ),
                 Checkbox(
-                  value: _selectedOrganizers[name] ?? false,
+                  value: _selectedOrganizers[docId] ?? false,
                   onChanged: (bool? newValue) {
                     setState(() {
-                      _selectedOrganizers[name] = newValue ?? false;
+                      _selectedOrganizers[docId] = newValue ?? false;
                     });
                   },
                 ),
@@ -321,18 +401,22 @@ Widget _buildActionButton(String label, Color color, VoidCallback onTap) {
     onPressed: onTap,
     style: ElevatedButton.styleFrom(
       backgroundColor: color,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: const EdgeInsets.all(12.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       elevation: 4,
       shadowColor: Colors.black38,
     ),
-    child: Text(
-      label,
-      style: GoogleFonts.montserrat(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: Colors.white,
-      ),
+    child: Row(
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.montserrat(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ],
     ),
   );
 }
