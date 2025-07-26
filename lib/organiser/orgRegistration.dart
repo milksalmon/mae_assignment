@@ -88,6 +88,12 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
         title: Text(
           'Register',
           style: GoogleFonts.montserrat(

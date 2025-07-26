@@ -28,37 +28,40 @@ class _CreateAccountState extends State<CreateAccount> {
         ).showSnackBar(const SnackBar(content: Text("Passwords do not match")));
         return;
       }
- try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
+      try {
+        UserCredential userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+              email: emailController.text.trim(),
+              password: passwordController.text.trim(),
+            );
 
-      await userCredential.user?.updateDisplayName(
-        '${firstNameController.text} ${lastNameController.text}',
-      );
+        await userCredential.user?.updateDisplayName(
+          '${firstNameController.text} ${lastNameController.text}',
+        );
 
-      // Save to Firestore
-      await FirebaseFirestore.instance.collection('users').doc(userCredential.user?.uid).set({
-        'firstName': firstNameController.text.trim(),
-        'lastName': lastNameController.text.trim(),
-        'email': emailController.text.trim(),
-      });
+        // Save to Firestore
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user?.uid)
+            .set({
+              'firstName': firstNameController.text.trim(),
+              'lastName': lastNameController.text.trim(),
+              'email': emailController.text.trim(),
+            });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account created!')),
-      );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Account created!')));
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const UserDashboard()),
-      );
-    } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Registration failed')),
-      );
-    }
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const UserDashboard()),
+        );
+      } on FirebaseAuthException catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Registration failed')),
+        );
+      }
 
       // Account creation logic
       print('First Name: ${firstNameController.text}');
@@ -206,12 +209,7 @@ class _CreateAccountState extends State<CreateAccount> {
                 const SizedBox(height: 20), // spacing
                 TextButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const OrganiserRegister(),
-                      ),
-                    );
+                    Navigator.pushNamed(context, '/orgReg');
                   },
                   child: Text(
                     'Register as an Event Organiser',

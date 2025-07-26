@@ -22,8 +22,29 @@ class _ManageFeedback extends State<ManageFeedback> {
     fetchFeedbacks();
   }
 
-  // FUUNCTION FOR FOLDING FEEDBACK BY VENDOR
-  Map<String, bool> _expandedVendors = {}; // TO TRACK EXPANDED VENDORS
+  // HELPER FUNCTION FOR TIMESTAMP UI
+  String getRelativeTime(Timestamp timestamp) {
+    if (timestamp == null) {
+      return '';
+    }
+    // CALCULATE THE DIFFERENCE BETWEEN NOW AND THE TIMESTAMP
+    final now = DateTime.now();
+    final dateTime = timestamp.toDate();
+    final difference = now.difference(dateTime);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays} days ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} hours ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} minutes ago';
+    } else {
+      return 'Just now';
+    }
+  }
+
+  // FUNCTION FOR FOLDING FEEDBACK BY EVENT
+  Map<String, bool> _expandedEvents = {}; // TO TRACK EXPANDED EVENTS
 
   String ratingFilter = '5 Ratings';
   final List<String> filters = [
@@ -47,31 +68,86 @@ class _ManageFeedback extends State<ManageFeedback> {
         .where((item) => item['rating'] == ratingFilter)
         .fold<Map<String, List<Map<String, dynamic>>>>({}, (map, item) {
           // DEFENSIVE FALLBACK TO 'Unknown Vendor' IF NOT FOUND ANY VENDOR
-          final vendor = item['vendor'] ?? 'Unknown Vendor';
-          map.putIfAbsent(vendor, () => []).add(item);
+          final eventName = item['eventName'] ?? 'Unknown Event';
+          map.putIfAbsent(eventName, () => []).add(item);
           return map;
         });
+  }
+
+  // TO DELETE COMMENT
+  Future<void> deleteSelectedFeedback() async {
+    final selectedIds =
+        _selectedFeedback.entries
+            .where((entry) => entry.value)
+            .map((entry) => entry.key)
+            .toSet();
+
+    final toDelete =
+        _ratingFilter
+            .where((item) => selectedIds.contains(item['id']))
+            .toList();
+
+    for (var feedback in toDelete) {
+      try {
+        final eventId = feedback['eventId'];
+        final feedbackId = feedback['id'];
+
+        await FirebaseFirestore.instance
+            .collection('event')
+            .doc(eventId)
+            .collection('feedback')
+            .doc(feedbackId)
+            .delete();
+      } catch (e) {
+        print('Error deleting feedback: ${feedback['id']}: $e');
+      }
+    }
+
+    // REFRESH THE UI AFTER DELETION
+    await fetchFeedbacks();
+    // CLEAR SELECTION
+    setState(() {
+      _selectedFeedback.clear();
+    });
   }
 
   // FETCHING FEEDBACK DATA FROM FIREBASE
   Future<void> fetchFeedbacks() async {
     try {
-      final snapshot =
-          await FirebaseFirestore.instance.collection('feedback').get();
+      final eventSnapshot =
+          await FirebaseFirestore.instance.collection('event').get();
+      List<Map<String, dynamic>> allFeedback = [];
+
+      for (var eventDoc in eventSnapshot.docs) {
+        final eventId = eventDoc.id;
+        final eventData = eventDoc.data();
+        final eventName = eventData['eventName'] ?? 'Unknown Event';
+        //final vendorName = eventData['orgName'] ?? 'Unknown Vendor';
+
+        final feedbackSnapshot =
+            await FirebaseFirestore.instance
+                .collection('event')
+                .doc(eventId)
+                .collection('feedback')
+                .get();
+
+        for (var feedbackDoc in feedbackSnapshot.docs) {
+          final feedbackData = feedbackDoc.data();
+          allFeedback.add({
+            'id': feedbackDoc.id, // AUTO ID
+            'eventId': eventId,
+            'name': feedbackData['name'] ?? '',
+            'comment': feedbackData['comment'] ?? '',
+            'rating': feedbackData['rating'] ?? '',
+            'eventName': eventName,
+            'timestamp': feedbackData['timestamp'],
+            //'vendor': vendorName,
+          });
+        }
+      }
 
       setState(() {
-        _ratingFilter =
-            snapshot.docs.map((doc) {
-              final data = doc.data();
-              return {
-                'id': doc.id, // AUTO ID
-                'name': data['name'] ?? '',
-                'comment': data['comment'] ?? '',
-                'rating': data['rating'] ?? '',
-                'vendor': data['vendor'] ?? '',
-              };
-            }).toList();
-
+        _ratingFilter = allFeedback;
         isLoading = false;
       });
     } catch (e) {
@@ -79,6 +155,25 @@ class _ManageFeedback extends State<ManageFeedback> {
       setState(() {
         isLoading = false;
       });
+      // snapshot.docs.map((doc) {
+      //   final data = doc.data();
+      //   return {
+      //     'id': doc.id, // AUTO ID
+      //     'name': data['name'] ?? '',
+      //     'comment': data['comment'] ?? '',
+      //     'rating': data['rating'] ?? '',
+      //     'vendor': data['vendor'] ?? '',
+      //   };
+      // }).toList();
+
+      //     isLoading = false;
+      //   });
+      // } catch (e) {
+      //   print('Error fetching feedbacks: $e');
+      //   setState(() {
+      //     isLoading = false;
+      //   });
+      // }
     }
   }
 
@@ -154,18 +249,18 @@ class _ManageFeedback extends State<ManageFeedback> {
                     : ListView(
                       children:
                           _groupedFeedbacksByVendor().entries.map((entry) {
-                            final vendor = entry.key;
+                            final eventName = entry.key;
                             final feedbackList = entry.value;
                             final isExpanded =
-                                _expandedVendors[vendor] ?? false;
+                                _expandedEvents[eventName] ?? false;
 
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                //VENDOR HEADER
+                                //EVENT HEADER
                                 ListTile(
                                   title: Text(
-                                    'Vendor: $vendor',
+                                    'Event : $eventName',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: Colors.black,
@@ -180,7 +275,8 @@ class _ManageFeedback extends State<ManageFeedback> {
                                     ),
                                     onPressed: () {
                                       setState(() {
-                                        _expandedVendors[vendor] = !isExpanded;
+                                        _expandedEvents[eventName] =
+                                            !isExpanded;
                                       });
                                     },
                                   ),
@@ -214,14 +310,35 @@ class _ManageFeedback extends State<ManageFeedback> {
                                                         CrossAxisAlignment
                                                             .start,
                                                     children: [
-                                                      Text(
-                                                        item['name'] ??
-                                                            'Unknown',
-                                                        style: const TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                        ),
+                                                      Row(
+                                                        children: [
+                                                          Text(
+                                                            item['name'] ??
+                                                                'Unknown',
+                                                            style:
+                                                                const TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 8,
+                                                          ),
+                                                          Text(
+                                                            getRelativeTime(
+                                                              item['timestamp'],
+                                                            ),
+                                                            style: const TextStyle(
+                                                              fontSize: 12,
+                                                              color:
+                                                                  Colors
+                                                                      .black54,
+                                                            ),
+                                                          ),
+                                                        ],
                                                       ),
+
                                                       const SizedBox(height: 4),
                                                       // REPLACING TEXT RATING WITH STARS
                                                       RatingBarIndicator(
@@ -308,7 +425,7 @@ class _ManageFeedback extends State<ManageFeedback> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildActionButton('Delete', Colors.red, () {
-                  print('Delete Button clicked');
+                  deleteSelectedFeedback();
                 }),
                 _buildActionButton('Restrict', Colors.orange, () {
                   print('Restrict Button clicked');

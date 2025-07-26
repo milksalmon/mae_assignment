@@ -134,35 +134,12 @@ class _OrganiserRegistration extends State<OrganiserRegistration> {
                                             )
                                             : [],
                                     onLaunchURL: _launchURL,
+                                    docId: item['id'], // PASS THE DOCID
+                                    onStatusChanged: fetchRequests,
                                   ),
                                 )
                                 .toList(),
                       ),
-              // child: ListView(
-              //   children: [
-              //     // LIST OF ALL CARD
-              //     buildRequestCard(
-              //       company: 'Kawkandy Solo',
-              //       name: 'Arfan Arhan',
-              //       remarks: [
-              //         'Organizing event at Johor Bharu Skudai',
-              //         'Inviting food halal vendors',
-              //       ],
-              //       date: '20 July 2024',
-              //       status: 'Pending',
-              //     ),
-              //     buildRequestCard(
-              //       company: 'TV3 Marketing',
-              //       name: 'Sangkau Liyau',
-              //       remarks: ['Ting tang ting', 'Tung tung tung sahur'],
-              //       date: '20 July 2024',
-              //       status: 'Rejected',
-              //     ),
-              //     // ADD ANOTHER CARD BELOW
-              //   ],
-              //   // FILTERING THE LIST
-              //   //.where((widget) => widget.status == statusFilter).toList(),
-              // ),
             ),
           ],
         ),
@@ -177,9 +154,11 @@ class _OrganiserRegistration extends State<OrganiserRegistration> {
 
       setState(() {
         requests =
-            snapshot.docs
-                .map((doc) => doc.data() as Map<String, dynamic>)
-                .toList();
+            snapshot.docs.map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              data['id'] = doc.id;
+              return data;
+            }).toList();
         isLoading = false;
       });
     } catch (e) {
@@ -201,6 +180,8 @@ Widget buildRequestCard({
   required String status, // TO ENABLE FILTERING CARD
   required List<String>? attachments, // FOR ATTACHING FILE
   required void Function(String) onLaunchURL,
+  required String docId,
+  required VoidCallback onStatusChanged, // TO REFRESH PAGE AFTER UPDATE
 }) {
   return Card(
     color: const Color(0xFFFFE3E3),
@@ -229,6 +210,7 @@ Widget buildRequestCard({
           const SizedBox(height: 10),
           const Text('Lorem Ipsum Dolor Sit Amet'),
           const SizedBox(height: 10),
+          // FOR ATTACHMENT
           if (attachments != null && attachments.isNotEmpty) ...[
             TextButton.icon(
               onPressed: () {
@@ -269,13 +251,23 @@ Widget buildRequestCard({
                   children: [
                     IconButton(
                       icon: const Icon(Icons.check, color: Colors.green),
-                      onPressed: () {},
+                      onPressed: () async {
+                        await FirebaseFirestore.instance
+                            .collection('organizers')
+                            .doc(docId)
+                            .update({'status': 'Approved'});
+                      },
                     ),
                     const Text('Approve'),
                     const SizedBox(width: 10),
                     IconButton(
                       icon: const Icon(Icons.close, color: Colors.red),
-                      onPressed: () {},
+                      onPressed: () async {
+                        await FirebaseFirestore.instance
+                            .collection('organizers')
+                            .doc(docId)
+                            .update({'status': 'Rejected'});
+                      },
                     ),
                     const Text('Reject'),
                   ],

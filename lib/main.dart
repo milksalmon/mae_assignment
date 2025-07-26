@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:mae_assignment/admin/manage_feedback.dart';
 import 'package:mae_assignment/admin/organiser_registration.dart';
+import 'package:mae_assignment/auth/forgot_password.dart';
 import 'package:provider/provider.dart';
+import 'package:mae_assignment/organiser/orgRegistration.dart';
 import 'firebase_options.dart';
 
 // screens
@@ -80,6 +82,8 @@ class MyApp extends StatelessWidget {
         '/manageFeedback': (context) => const ManageFeedback(),
         '/OAM': (context) => const OrganizerAccountManagement(),
         '/event_page': (context) => const EventPage(),
+        '/orgReg': (context) => const OrganiserRegister(),
+        '/forgot': (context) => const ForgotPasswordScreen(),
         //'/home': (context) => const HomePage(), // optional
       },
       home: AuthGate(),
