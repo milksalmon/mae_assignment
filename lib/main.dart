@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:mae_assignment/admin/manage_feedback.dart';
 import 'package:mae_assignment/admin/organiser_registration.dart';
 import 'package:mae_assignment/auth/forgot_password.dart';
+import 'package:mae_assignment/organiser/orgDashboard.dart';
 import 'package:provider/provider.dart';
 import 'package:mae_assignment/organiser/orgRegistration.dart';
 import 'firebase_options.dart';
@@ -75,8 +77,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorSchemeSeed: Colors.green,
         fontFamily: 'Montserrat',
-        useMaterial3: true
-        ),
+        useMaterial3: true,
+      ),
       routes: {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const CreateAccount(),
@@ -102,7 +104,34 @@ class AuthGate extends StatelessWidget {
     if (user == null) {
       return const LoginScreen();
     } else {
-      return const UserDashboard();
+      // FETCH USER ROLE FROM FIRESTORE (non-async workaround using FutureBuilder)
+      return FutureBuilder<DocumentSnapshot>(
+        future:
+            FirebaseFirestore.instance.collection('users').doc(user.uid).get(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          if (!snapshot.hasData || !snapshot.data!.exists) {
+            return const LoginScreen();
+          }
+
+          final role = snapshot.data?.get('role');
+
+          if (role == 'admin') {
+            return const AdminDashboard();
+          } else if (role == 'user') {
+            return const UserDashboard();
+          } else if (role == 'organiser') {
+            return const OrganiserDashboard();
+          } else {
+            return const LoginScreen();
+          }
+        },
+      );
     }
   }
 }

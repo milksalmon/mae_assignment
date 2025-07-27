@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -33,9 +34,13 @@ class _AdminDashboard extends State<AdminDashboard> {
           IconButton(
             icon: Icon(Icons.logout),
             tooltip: 'Logout',
-            onPressed: () {
+            onPressed: () async {
+              // PROPERLY LOGOUT
+              await FirebaseAuth.instance.signOut();
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(context, '/login');
+              }
               // PUSH REPLACEMENT NAMED = DONT ALLOW USER TO GO BACK TO PREVIOUS SCREEN
-              Navigator.pushReplacementNamed(context, '/login');
             },
           ),
         ],
