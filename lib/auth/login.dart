@@ -27,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Image.asset(
-              'assets/logo.png', // replace with your image path
+              'assets/LoginJambu.png', // replace with your image path
               height: 120,
             ),
 
@@ -36,6 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
             const Text(
               'Login',
               style: TextStyle(
+                fontFamily: 'Montserrat',
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: Colors.pink,
