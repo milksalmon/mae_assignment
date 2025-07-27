@@ -28,53 +28,42 @@ class _CreateAccountState extends State<CreateAccount> {
         ).showSnackBar(const SnackBar(content: Text("Passwords do not match")));
         return;
       }
- try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
+      try {
+        UserCredential userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+        );
 
-      await userCredential.user?.updateDisplayName(
-        '${firstNameController.text} ${lastNameController.text}',
-      );
+        await userCredential.user?.updateDisplayName(
+          '${firstNameController.text} ${lastNameController.text}',
+        );
 
-      // Save to Firestore
-      await FirebaseFirestore.instance.collection('users').doc(userCredential.user?.uid).set({
-        'firstName': firstNameController.text.trim(),
-        'lastName': lastNameController.text.trim(),
-        'email': emailController.text.trim(),
-      });
+        // Save to Firestore
+        await FirebaseFirestore.instance.collection('users').doc(userCredential.user?.uid).set({
+          'createdAt': FieldValue.serverTimestamp(),
+          'firstName': firstNameController.text.trim(),
+          'lastName': lastNameController.text.trim(),
+          'email': emailController.text.trim(),
+          'role': 'user',
+        });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account created!')),
-      );
+        // Send email verification
+        await userCredential.user?.sendEmailVerification();
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const UserDashboard()),
-      );
-    } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Registration failed')),
-      );
-    }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account created! Please check your email to verify your account.')),
+        );
 
-      // Account creation logic
-      print('First Name: ${firstNameController.text}');
-      print('Last Name: ${lastNameController.text}');
-      print('Email: ${emailController.text}');
-      print('Password: ${passwordController.text}');
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Account created!')));
-
-      // Navigate to dashboard
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const UserDashboard()),
-      );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const UserDashboard()),
+        );
+      } on FirebaseAuthException catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Registration failed')),
+        );
+      }
     }
   }
 
