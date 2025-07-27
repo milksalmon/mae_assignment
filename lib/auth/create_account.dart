@@ -14,8 +14,8 @@ class CreateAccount extends StatefulWidget {
 
 class _CreateAccountState extends State<CreateAccount> {
   final _formKey = GlobalKey<FormState>();
-  final firstNameController = TextEditingController();
-  final lastNameController = TextEditingController();
+  final nameController = TextEditingController();
+  // final lastNameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
@@ -28,60 +28,56 @@ class _CreateAccountState extends State<CreateAccount> {
         ).showSnackBar(const SnackBar(content: Text("Passwords do not match")));
         return;
       }
- try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
+      try {
+        UserCredential userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+              email: emailController.text.trim(),
+              password: passwordController.text.trim(),
+            );
 
-      await userCredential.user?.updateDisplayName(
-        '${firstNameController.text} ${lastNameController.text}',
-      );
+        await userCredential.user?.updateDisplayName(
+          '${nameController.text}',
+        );
 
-      // Save to Firestore
-      await FirebaseFirestore.instance.collection('users').doc(userCredential.user?.uid).set({
-        'firstName': firstNameController.text.trim(),
-        'lastName': lastNameController.text.trim(),
-        'email': emailController.text.trim(),
-      });
+        // Save to Firestore
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user?.uid)
+            .set({
+              'createdAt': FieldValue.serverTimestamp(),
+              'name': nameController.text.trim(),
+              // 'lastName': lastNameController.text.trim(),
+              'email': emailController.text.trim(),
+              'role': 'user',
+            });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account created!')),
-      );
+        // Send email verification
+        await userCredential.user?.sendEmailVerification();
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const UserDashboard()),
-      );
-    } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Registration failed')),
-      );
-    }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Account created! Please check your email to verify your account.',
+            ),
+          ),
+        );
 
-      // Account creation logic
-      print('First Name: ${firstNameController.text}');
-      print('Last Name: ${lastNameController.text}');
-      print('Email: ${emailController.text}');
-      print('Password: ${passwordController.text}');
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Account created!')));
-
-      // Navigate to dashboard
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const UserDashboard()),
-      );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const UserDashboard()),
+        );
+      } on FirebaseAuthException catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Registration failed')),
+        );
+      }
     }
   }
 
   @override
   void dispose() {
-    firstNameController.dispose();
-    lastNameController.dispose();
+    nameController.dispose();
+    // lastNameController.dispose();
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
@@ -91,6 +87,20 @@ class _CreateAccountState extends State<CreateAccount> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Create an Account',
+          style: GoogleFonts.montserrat(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFFFF2F67),
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 1,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
       backgroundColor: const Color.fromARGB(255, 246, 245, 245),
       body: SafeArea(
         child: Padding(
@@ -99,43 +109,44 @@ class _CreateAccountState extends State<CreateAccount> {
             key: _formKey,
             child: ListView(
               children: [
-                const SizedBox(height: 30),
-                Center(
-                  child: Text(
-                    "Create an Account",
-                    style: GoogleFonts.montserrat(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w800, //extra bold
-                      color: const Color(0xFFFF2F67),
-                    ),
-                  ),
-                ),
+                const SizedBox(height: 10),
+
+                // Center(
+                //   child: Text(
+                //     "Create an Account",
+                //     style: GoogleFonts.montserrat(
+                //       fontSize: 40,
+                //       fontWeight: FontWeight.w800, //extra bold
+                //       color: const Color(0xFFFF2F67),
+                //     ),
+                //   ),
+                // ),
                 const SizedBox(height: 40),
                 TextFormField(
-                  controller: firstNameController,
+                  controller: nameController,
                   decoration: InputDecoration(
-                    labelText: 'First Name',
+                    labelText: 'Name',
                     labelStyle: GoogleFonts.montserrat(),
                     border: const OutlineInputBorder(),
                   ),
                   validator:
                       (value) =>
                           value!.isEmpty
-                              ? 'Please enter your first name'
+                              ? 'Please enter your name'
                               : null,
                 ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: lastNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Last Name',
-                    labelStyle: GoogleFonts.montserrat(),
-                    border: const OutlineInputBorder(),
-                  ),
-                  validator:
-                      (value) =>
-                          value!.isEmpty ? 'Please enter your last name' : null,
-                ),
+                // const SizedBox(height: 20),
+                // TextFormField(
+                //   controller: lastNameController,
+                //   decoration: InputDecoration(
+                //     labelText: 'Last Name',
+                //     labelStyle: GoogleFonts.montserrat(),
+                //     border: const OutlineInputBorder(),
+                //   ),
+                //   validator:
+                //       (value) =>
+                //           value!.isEmpty ? 'Please enter your last name' : null,
+                // ),
                 const SizedBox(height: 20),
                 TextFormField(
                   controller: emailController,
@@ -198,12 +209,7 @@ class _CreateAccountState extends State<CreateAccount> {
                 const SizedBox(height: 20), // spacing
                 TextButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const OrganiserRegister(),
-                      ),
-                    );
+                    Navigator.pushNamed(context, '/orgReg');
                   },
                   child: Text(
                     'Register as an Event Organiser',

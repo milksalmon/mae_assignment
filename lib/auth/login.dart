@@ -100,6 +100,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 onPressed: () async {
                   // TODO: Handle login logic
+                  final email = emailController.text.trim();
+                  final password = passwordController.text.trim();
+
                   if (emailController.text.isEmpty &&
                       passwordController.text.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -164,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () {
-                  // TODO: Forgot password logic
+                  Navigator.pushNamed(context, '/forgot');
                 },
                 child: const Text(
                   'Forgot Password?',
@@ -179,7 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
             const SizedBox(height: 10),
 
-            //  Google Sign-in Button
+            //  Google Sign in Button
             SizedBox(
               width: double.infinity,
               height: 50,
