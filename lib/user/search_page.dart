@@ -50,6 +50,11 @@ class _SearchPageState extends State<SearchPage> {
             hintText: 'Search events...',
             border: InputBorder.none,
             hintStyle: TextStyle(color: Colors.grey),
+            suffixIcon: IconButton(
+              icon: Icon(Icons.filter_alt_outlined, color: Colors.black),
+              onPressed: () {
+              },
+            ),
           ),
           style: GoogleFonts.montserrat(fontSize: 18, color: Colors.black),
           onChanged: (value) {
