@@ -23,85 +23,86 @@ class _OrganiserDashboardState extends State<OrganiserDashboard> {
     });
   }
 
-  final List<Widget> _pages = [
-    organiserStatus == "approved"
+  @override
+  void initState() {
+    super.initState();
+    fetchOrganiserStatus();
+  }
+
+  Future<void> fetchOrganiserStatus() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final doc =
+        await FirebaseFirestore.instance
+            .collection('organisers')
+            .doc(user!.uid)
+            .get();
+
+    if (doc.exists) {
+      setState(() {
+        organiserStatus = doc['status']; // e.g., 'approved' or 'pending'
+      });
+    }
+  }
+
+@override
+Widget build(BuildContext context) {
+  final List<Widget> pages = [
+    organiserStatus.toLowerCase() == "approved"
         ? UploadEventForm()
-        : pendingApprovalWidget(), // Show UploadEventForm if approved, else show OrganiserRegister
-    Center(child: Text("Your Events")),
+        : pendingApprovalWidget(),
     Center(child: Text("Notification")),
     Center(child: Text("Account")),
   ];
 
-//   @override
-// void initState() {
-//   super.initState();
-//   fetchOrganiserStatus();
-// }
-
-// Future<void> fetchOrganiserStatus() async {
-//   final user = FirebaseAuth.instance.currentUser;
-//   final doc = await FirebaseFirestore.instance.collection('organisers').doc(user!.uid).get();
-
-//   if (doc.exists) {
-//     setState(() {
-//       organiserStatus = doc['status']; // e.g., 'approved' or 'pending'
-//     });
-//   }
-// }
-
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Padding(
-          padding: const EdgeInsets.only(top: 12),
-          child: Row(
-            children: [
-              Image.asset('assets/logo.png', height: 80, width: 80),
-              const SizedBox(width: 12),
-              // Welcome text
-              Text(
-                'Welcome',
-                style: GoogleFonts.montserrat(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
+  return Scaffold(
+    appBar: AppBar(
+      automaticallyImplyLeading: false,
+      title: Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Row(
+          children: [
+            Image.asset('assets/logo.png', height: 80, width: 80),
+            const SizedBox(width: 12),
+            Text(
+              'Welcome',
+              style: GoogleFonts.montserrat(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-      body: _pages[_selectedIndex],
-
-      bottomNavigationBar: NavigationBar(
-        backgroundColor: const Color(0xFFECEFE6),
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: _onItemTapped,
-        indicatorColor: Colors.green,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.event_outlined),
-            selectedIcon: Icon(Icons.event),
-            label: "Your Events",
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.notifications_outlined),
-            selectedIcon: Icon(Icons.notifications),
-            label: "Notifications",
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: "Account",
-          ),
-        ],
-      ),
-    );
-  }
+    ),
+    body: pages[_selectedIndex],
+    bottomNavigationBar: NavigationBar(
+      backgroundColor: const Color(0xFFECEFE6),
+      selectedIndex: _selectedIndex,
+      onDestinationSelected: _onItemTapped,
+      indicatorColor: Colors.green,
+      destinations: const [
+        NavigationDestination(
+          icon: Icon(Icons.event_outlined),
+          selectedIcon: Icon(Icons.event),
+          label: "Your Events",
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.notifications_outlined),
+          selectedIcon: Icon(Icons.notifications),
+          label: "Notifications",
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.person_outline),
+          selectedIcon: Icon(Icons.person),
+          label: "Account",
+        ),
+      ],
+    ),
+  );
 }
+}
+
 Widget pendingApprovalWidget() {
   return Center(
     child: Padding(
@@ -123,19 +124,13 @@ Widget pendingApprovalWidget() {
           const SizedBox(height: 12),
           Text(
             "You are allowed to post events after your account is approved.",
-            style: GoogleFonts.montserrat(
-              fontSize: 16,
-              color: Colors.black54,
-            ),
+            style: GoogleFonts.montserrat(fontSize: 16, color: Colors.black54),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           Text(
             "If you have any inquiries, reach out to us.",
-            style: GoogleFonts.montserrat(
-              fontSize: 16,
-              color: Colors.black54,
-            ),
+            style: GoogleFonts.montserrat(fontSize: 16, color: Colors.black54),
             textAlign: TextAlign.center,
           ),
         ],

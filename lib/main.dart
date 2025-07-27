@@ -17,6 +17,7 @@ import 'admin/admin_dashboard.dart';
 import 'home.dart';
 import 'user/event_page.dart';
 import 'admin/account_management.dart';
+import 'organiser/orgDashboard.dart';
 
 // Providers
 import 'providers/auth_provider.dart'; // You should create this if not yet created
@@ -89,6 +90,7 @@ class MyApp extends StatelessWidget {
         '/event_page': (context) => const EventPage(),
         '/orgReg': (context) => const OrganiserRegister(),
         '/forgot': (context) => const ForgotPasswordScreen(),
+        '/orgDashboard': (context) => const OrganiserDashboard(),
         //'/home': (context) => const HomePage(), // optional
       },
       home: AuthGate(),

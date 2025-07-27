@@ -137,6 +137,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           context,
                           '/userDashboard',
                         );
+                      } else if (role == 'organiser') {
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/orgDashboard',
+                        );
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Access denied')),
