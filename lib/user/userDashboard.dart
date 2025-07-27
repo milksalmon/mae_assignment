@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import 'search_page.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class UserDashboard extends StatefulWidget {
@@ -456,6 +457,16 @@ class _HomeTabState extends State<_HomeTab> {
     super.dispose();
   }
 
+  void _openSearchPage() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => SearchPage(
+          allEvents: _allEvents,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -463,28 +474,20 @@ class _HomeTabState extends State<_HomeTab> {
       child: Column(
         children: [
           // Search bar with filter icon
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search events...',
-                    prefixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24.0),
-                    ),
+          GestureDetector(
+            onTap: _openSearchPage,
+            child: AbsorbPointer(
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search events...',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24.0),
                   ),
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                  },
                 ),
               ),
-              SizedBox(width: 10),
-              Icon(Icons.filter_alt_outlined),
-            ],
+            ),
           ),
           SizedBox(height: 16),
           // Location
