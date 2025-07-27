@@ -95,6 +95,13 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
           'status': 'Pending',
         });
 
+        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+          'createdAt': FieldValue.serverTimestamp(),
+          'name': _picNameController.text.trim(),
+          'email':  _emailController.text.trim(),
+          'role': 'organiser',
+        });
+
         // Optionally send email verification
         await userCredential.user?.sendEmailVerification();
 
