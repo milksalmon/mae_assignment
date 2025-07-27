@@ -33,16 +33,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
             const SizedBox(height: 20),
 
-            const Text(
-              'Login',
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.pink,
-              ),
-            ),
-
+            Text(
+                  'Login',
+                  style: GoogleFonts.montserrat(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.pink,
+                  ),
+                ),
             const SizedBox(height: 30),
 
             // ✉️ Email

@@ -90,9 +90,16 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
           'picName': _picNameController.text.trim(),
           'phoneNumber': _phoneController.text.trim(),
           'email': _emailController.text.trim(),
+          'attachments': [permitUrl, ssmUrl],
+          'description': '',
+          'status': 'Pending',
+        });
+
+        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+          'createdAt': FieldValue.serverTimestamp(),
+          'name': _picNameController.text.trim(),
+          'email':  _emailController.text.trim(),
           'role': 'organiser',
-          'permitUrl': permitUrl,
-          'ssmUrl': ssmUrl,
         });
 
         // Optionally send email verification
