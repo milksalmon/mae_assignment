@@ -27,21 +27,20 @@ class _LoginScreenState extends State<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Image.asset(
-              'assets/logo.png', // replace with your image path
+              'assets/LoginJambu.png', // replace with your image path
               height: 120,
             ),
 
             const SizedBox(height: 20),
 
-            const Text(
-              'Login',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.pink,
-              ),
-            ),
-
+            Text(
+                  'Login',
+                  style: GoogleFonts.montserrat(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.pink,
+                  ),
+                ),
             const SizedBox(height: 30),
 
             // ✉️ Email
