@@ -126,10 +126,10 @@ class _OrganiserRegistration extends State<OrganiserRegistration> {
                                 .map(
                                   (item) => buildRequestCard(
                                     context: context,
-                                    company: item['company'],
-                                    name: item['name'],
-                                    remarks: List<String>.from(item['remarks']),
-                                    date: item['date'],
+                                    company: item['organizationName'],
+                                    name: item['picName'],
+                                    remarks: item['description'],
+                                    date: item['createdAt'],
                                     status: item['status'],
                                     attachments:
                                         item['attachments'] != null
@@ -154,13 +154,21 @@ class _OrganiserRegistration extends State<OrganiserRegistration> {
   Future<void> fetchRequests() async {
     try {
       final snapshot =
-          await FirebaseFirestore.instance.collection('organizers').get();
+          await FirebaseFirestore.instance.collection('organisers').get();
 
       setState(() {
         requests =
             snapshot.docs.map((doc) {
               final data = doc.data() as Map<String, dynamic>;
               data['id'] = doc.id;
+
+              if (data['createdAt'] is Timestamp) {
+                final dt = (data['createdAt'] as Timestamp).toDate();
+                data['createdAt'] =
+                    '${dt.day}/${dt.month}/${dt.year} ${dt.hour}:${dt.minute}';
+              } else {
+                data['createdAt'] = 'N/A';
+              }
               return data;
             }).toList();
         isLoading = false;
@@ -179,7 +187,7 @@ Widget buildRequestCard({
   required BuildContext context,
   required String company,
   required String name,
-  required List<String> remarks,
+  required String remarks,
   required String date,
   required String status, // TO ENABLE FILTERING CARD
   required List<String>? attachments, // FOR ATTACHING FILE
@@ -210,8 +218,7 @@ Widget buildRequestCard({
             'Remarks',
             style: TextStyle(decoration: TextDecoration.underline),
           ),
-          ...remarks.map((text) => Text(". $text")).toList(),
-          const SizedBox(height: 10),
+          Text(remarks.isNotEmpty ? remarks : '-'),
           //const Text('Lorem Ipsum Dolor Sit Amet'),
           const SizedBox(height: 10),
           // FOR ATTACHMENT
@@ -318,9 +325,10 @@ Widget buildRequestCard({
                       icon: const Icon(Icons.check, color: Colors.green),
                       onPressed: () async {
                         await FirebaseFirestore.instance
-                            .collection('organizers')
+                            .collection('organisers')
                             .doc(docId)
                             .update({'status': 'Approved'});
+                        onStatusChanged();
                       },
                     ),
                     const Text('Approve'),
@@ -329,9 +337,10 @@ Widget buildRequestCard({
                       icon: const Icon(Icons.close, color: Colors.red),
                       onPressed: () async {
                         await FirebaseFirestore.instance
-                            .collection('organizers')
+                            .collection('organisers')
                             .doc(docId)
                             .update({'status': 'Rejected'});
+                        onStatusChanged();
                       },
                     ),
                     const Text('Reject'),

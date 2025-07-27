@@ -22,22 +22,22 @@ class _OrganizerAccountManagementState
   @override
   void initState() {
     super.initState();
-    // Fetch organizer accounts from the provider or database
-    _fetchOrganizerAccounts();
+    // Fetch organiser accounts from the provider or database
+    _fetchOrganiserAccounts();
   }
 
   // TO UPDATE THE STATUS TO SUSPEND AND UNSUSPEND
   Future<void> _updateStatusForSelected(String newStatus) async {
     try {
       final selectedIds =
-          _selectedOrganizers.entries
+          _selectedOrganisers.entries
               .where((entry) => entry.value)
               .map((entry) => entry.key)
               .toList();
 
       for (String docId in selectedIds) {
         await FirebaseFirestore.instance
-            .collection('organizers')
+            .collection('organisers')
             .doc(docId)
             .update({'status': newStatus});
       }
@@ -46,7 +46,7 @@ class _OrganizerAccountManagementState
         context,
       ).showSnackBar(SnackBar(content: Text('Status updated to $newStatus.')));
 
-      await _fetchOrganizerAccounts(); // TO REFRESH
+      await _fetchOrganiserAccounts(); // TO REFRESH
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -54,7 +54,7 @@ class _OrganizerAccountManagementState
     }
   }
 
-  final Map<String, bool> _selectedOrganizers = {};
+  final Map<String, bool> _selectedOrganisers = {};
 
   List<Map<String, dynamic>> _orgAcc = [];
   bool isLoading = true;
@@ -122,7 +122,7 @@ class _OrganizerAccountManagementState
                         statusFilter = newValue!;
                         isLoading = true;
                       });
-                      _fetchOrganizerAccounts();
+                      _fetchOrganiserAccounts();
                     },
                     items:
                         statuses.map((status) {
@@ -155,10 +155,10 @@ class _OrganizerAccountManagementState
                           final org = _orgAcc[index];
                           return buildRequestCard(
                             context: context,
-                            company: org['company'],
-                            name: org['name'],
-                            remarks: List<String>.from(org['remarks'] ?? []),
-                            date: org['date'],
+                            company: org['organizationName'],
+                            name: org['picName'],
+                            remarks: org['description'] ?? '',
+                            date: org['date'] ?? 'N/A',
                             status: org['status'],
                             attachments: List<String>.from(
                               org['attachments'] ?? [],
@@ -168,7 +168,7 @@ class _OrganizerAccountManagementState
                               org['ratingBreakdown'] ?? {},
                             ),
                             docId: org['id'],
-                            onStatusChanged: _fetchOrganizerAccounts,
+                            onStatusChanged: _fetchOrganiserAccounts,
                           );
                         },
                       ),
@@ -208,12 +208,12 @@ class _OrganizerAccountManagementState
   }
   // BODY END HERE
 
-  Future<void> _fetchOrganizerAccounts() async {
+  Future<void> _fetchOrganiserAccounts() async {
     try {
       final snapshot =
-          await FirebaseFirestore.instance.collection('organizers').get();
+          await FirebaseFirestore.instance.collection('organisers').get();
 
-      List<Map<String, dynamic>> organizerList = [];
+      List<Map<String, dynamic>> organiserList = [];
 
       for (var doc in snapshot.docs) {
         final data = doc.data();
@@ -225,6 +225,14 @@ class _OrganizerAccountManagementState
         }
 
         data['id'] = doc.id;
+        // CONVERTING FIRESSTORE TIMESTAMP
+        if (data['createdAt'] is Timestamp) {
+          final dt = (data['createdAt'] as Timestamp).toDate();
+          data['date'] =
+              '${dt.day}/${dt.month}/${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
+        } else {
+          data['date'] = 'N/A';
+        }
 
         // FETCH RATING SUBCOLLECTION
         final ratingSnap = await doc.reference.collection('rating').get();
@@ -252,16 +260,16 @@ class _OrganizerAccountManagementState
           data['ratingBreakdown'] = normalizedRatingData;
         }
 
-        organizerList.add(data);
+        organiserList.add(data);
       }
 
       setState(() {
-        _orgAcc = organizerList;
+        _orgAcc = organiserList;
         isLoading = false;
-        _selectedOrganizers.clear();
+        _selectedOrganisers.clear();
       });
     } catch (e) {
-      print('Error fetching organizer accounts: $e');
+      print('Error fetching organiser accounts: $e');
       setState(() {
         isLoading = false;
       });
@@ -272,7 +280,7 @@ class _OrganizerAccountManagementState
     required BuildContext context,
     required String company,
     required String name,
-    required List<String> remarks,
+    required String remarks,
     required String date,
     required String status,
     required List<String>? attachments,
@@ -306,10 +314,10 @@ class _OrganizerAccountManagementState
                   ),
                 ),
                 Checkbox(
-                  value: _selectedOrganizers[docId] ?? false,
+                  value: _selectedOrganisers[docId] ?? false,
                   onChanged: (bool? newValue) {
                     setState(() {
-                      _selectedOrganizers[docId] = newValue ?? false;
+                      _selectedOrganisers[docId] = newValue ?? false;
                     });
                   },
                 ),
@@ -349,7 +357,7 @@ class _OrganizerAccountManagementState
             const SizedBox(height: 12),
 
             // REMARKS
-            ...remarks.map((remark) => Text('* $remark')).toList(),
+            Text(remarks.isNotEmpty ? '* $remarks' : '-'),
             const SizedBox(height: 12),
 
             // ATTACHMENT SECTION (Only show if attachments exist)
