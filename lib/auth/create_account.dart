@@ -44,14 +44,23 @@ class _CreateAccountState extends State<CreateAccount> {
             .collection('users')
             .doc(userCredential.user?.uid)
             .set({
+              'createdAt': FieldValue.serverTimestamp(),
               'firstName': firstNameController.text.trim(),
               'lastName': lastNameController.text.trim(),
               'email': emailController.text.trim(),
+              'role': 'user',
             });
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Account created!')));
+        // Send email verification
+        await userCredential.user?.sendEmailVerification();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Account created! Please check your email to verify your account.',
+            ),
+          ),
+        );
 
         Navigator.pushReplacement(
           context,
@@ -62,22 +71,6 @@ class _CreateAccountState extends State<CreateAccount> {
           SnackBar(content: Text(e.message ?? 'Registration failed')),
         );
       }
-
-      // Account creation logic
-      print('First Name: ${firstNameController.text}');
-      print('Last Name: ${lastNameController.text}');
-      print('Email: ${emailController.text}');
-      print('Password: ${passwordController.text}');
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Account created!')));
-
-      // Navigate to dashboard
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const UserDashboard()),
-      );
     }
   }
 
@@ -95,12 +88,18 @@ class _CreateAccountState extends State<CreateAccount> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+        title: Text(
+          'Create an Account',
+          style: GoogleFonts.montserrat(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFFFF2F67),
+          ),
         ),
+        backgroundColor: Colors.white,
+        elevation: 1,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       backgroundColor: const Color.fromARGB(255, 246, 245, 245),
       body: SafeArea(
@@ -110,17 +109,18 @@ class _CreateAccountState extends State<CreateAccount> {
             key: _formKey,
             child: ListView(
               children: [
-                const SizedBox(height: 30),
-                Center(
-                  child: Text(
-                    "Create an Account",
-                    style: GoogleFonts.montserrat(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w800, //extra bold
-                      color: const Color(0xFFFF2F67),
-                    ),
-                  ),
-                ),
+                const SizedBox(height: 10),
+
+                // Center(
+                //   child: Text(
+                //     "Create an Account",
+                //     style: GoogleFonts.montserrat(
+                //       fontSize: 40,
+                //       fontWeight: FontWeight.w800, //extra bold
+                //       color: const Color(0xFFFF2F67),
+                //     ),
+                //   ),
+                // ),
                 const SizedBox(height: 40),
                 TextFormField(
                   controller: firstNameController,

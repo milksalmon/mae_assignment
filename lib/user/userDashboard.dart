@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -26,7 +27,14 @@ class _ReminderTab extends StatefulWidget {
 }
 
 class _AccountTab extends StatefulWidget {
-  const _AccountTab();
+  final bool swipeNavigationEnabled;
+  final ValueChanged<bool>? onSwipeNavigationChanged;
+
+  const _AccountTab({
+    Key? key,
+    this.swipeNavigationEnabled = true,
+    this.onSwipeNavigationChanged,
+  }) : super(key: key);
 
   @override
   State<_AccountTab> createState() => _AccountTabState();
@@ -35,12 +43,39 @@ class _AccountTab extends StatefulWidget {
 class _SavedTabState extends State<_SavedTab> {
   @override
   Widget build(BuildContext context) {
+    // Replace with your actual saved events data
+    final savedEvents = [
+      'EXPOEVENT.png',
+      'COFFEEFEST.png',
+      // Add more saved event image names here
+    ];
+
     return Column(
       children: [
-        Center(
-          child: Text(
-            'Saved',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        const SizedBox(height: 20),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
+            margin: const EdgeInsets.only(left: 20),
+            child: Text(
+              "Saved Events",
+              style: GoogleFonts.montserrat(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFFFF2F67),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            child: ListView.builder(
+              itemCount: savedEvents.length,
+              itemBuilder: (context, index) {
+                return EventCard(imageName: savedEvents[index]);
+              },
+            ),
           ),
         ),
       ],
@@ -51,13 +86,49 @@ class _SavedTabState extends State<_SavedTab> {
 class _ReminderTabState extends State<_ReminderTab> {
   @override
   Widget build(BuildContext context) {
+    // Replace with your actual reminder data
+    final reminders = [
+      {'title': 'Expo iFood', 'date': 'Fri, 11th July, 2:30pm'},
+      {'title': 'Coffee Fest', 'date': 'Sat, 12th July, 10:00am'},
+    ];
+
     return Column(
       children: [
-        // Account info, settings, log out button, etc.
-        Center(
-          child: Text(
-            'Reminder',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        const SizedBox(height: 20),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
+            margin: const EdgeInsets.only(left: 20),
+            child: Text(
+              "Reminders",
+              style: GoogleFonts.montserrat(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFFFF2F67),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: reminders.length,
+            itemBuilder: (context, index) {
+              final reminder = reminders[index];
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                child: ListTile(
+                  leading: Icon(Icons.event_note, color: Colors.green),
+                  title: Text(reminder['title']!),
+                  subtitle: Text(reminder['date']!),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete, color: Colors.red),
+                    onPressed: () {
+                      // Remove reminder logic
+                    },
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],
@@ -74,26 +145,38 @@ class _AccountTabState extends State<_AccountTab> {
     final googleUser = FirebaseAuth.instance.currentUser;
     final googleName = googleUser?.displayName ?? 'No name';
     final googleEmail = googleUser?.email ?? 'No email';
-    final googlePhotoUrl = googleUser?.photoURL ?? 'No photo';
+    final googlePhotoUrl = googleUser?.photoURL;
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(height: 10),
-          const Text(
-            "Account Details",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              margin: const EdgeInsets.only(left: 20),
+              child: Text(
+                "Account",
+                style: GoogleFonts.montserrat(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFFFF2F67),
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 20),
           CircleAvatar(
             radius: 50,
             backgroundColor: Colors.grey,
             backgroundImage:
-                googlePhotoUrl != null ? NetworkImage(googlePhotoUrl) : null,
+                (googlePhotoUrl != null && googlePhotoUrl.isNotEmpty)
+                    ? NetworkImage(googlePhotoUrl)
+                    : null,
             child:
-                googlePhotoUrl == null
-                    ? const Icon(Icons.person, size: 50, color: Colors.grey)
+                (googlePhotoUrl == null || googlePhotoUrl.isEmpty)
+                    ? const Icon(Icons.person, size: 50, color: Colors.white)
                     : null,
           ),
           const SizedBox(height: 10),
@@ -104,18 +187,16 @@ class _AccountTabState extends State<_AccountTab> {
           const SizedBox(height: 4),
           Text(googleEmail, style: const TextStyle(color: Colors.grey)),
           const SizedBox(height: 16),
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                "0 Following",
-                style: TextStyle(fontWeight: FontWeight.bold),
+              TextButton(
+                onPressed: () {},
+                child: const Text(
+                  "0 Following",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
-              // SizedBox(width: 20),
-              // Text(
-              //   "0 Followers",
-              //   style: TextStyle(fontWeight: FontWeight.bold),
-              // ),
             ],
           ),
           const SizedBox(height: 20),
@@ -128,7 +209,10 @@ class _AccountTabState extends State<_AccountTab> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
             ),
-            child: const Text("Edit Profile"),
+            child: const Text(
+              "Edit Profile",
+              style: TextStyle(color: Colors.white),
+            ),
           ),
           const SizedBox(height: 30, width: double.infinity),
           sectionTitle("Preferences"),
@@ -138,10 +222,20 @@ class _AccountTabState extends State<_AccountTab> {
             trailing: Switch(value: false, onChanged: (_) {}),
           ),
           Divider(),
+          // Tab Swipe toggle
           ListTile(
-            leading: const Icon(Icons.workspaces),
-            title: const Text("Followed Organisers"),
+            leading: const Icon(Icons.airline_stops_sharp),
+            title: const Text("Toggle Swiping Tabs"),
+            trailing: Switch(
+              value: widget.swipeNavigationEnabled,
+              onChanged: widget.onSwipeNavigationChanged,
+            ),
           ),
+          // ListTile(
+          //   leading: const Icon(Icons.workspaces),
+          //   title: const Text("Followed Organisers"),
+          //   onTap: () {},
+          // ),
           sectionTitle("Connected Accounts"),
           ListTile(
             leading: Image.asset(
@@ -157,14 +251,6 @@ class _AccountTabState extends State<_AccountTab> {
               child: const Text("Disconnect"),
             ),
           ),
-          // ListTile(
-          //   leading: const Icon(Icons.apple),
-          //   title: const Text("Apple"),
-          //   trailing: TextButton(
-          //     onPressed: () {},
-          //     child: const Text("Connect"),
-          //   ),
-          // ),
           sectionTitle("Rules & Regulations"),
           ListTile(
             leading: const Icon(Icons.description_outlined),
@@ -178,6 +264,10 @@ class _AccountTabState extends State<_AccountTab> {
                 await FirebaseAuth.instance.signOut();
                 Provider.of<AppAuthProvider>(context, listen: false).logout();
                 Navigator.pushReplacementNamed(context, '/login');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("You are signed out")),
+                );
+                return;
               } catch (e) {
                 print('Sign out failed, Error: $e');
               }
@@ -189,7 +279,10 @@ class _AccountTabState extends State<_AccountTab> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
             ),
-            child: const Text("Sign Out"),
+            child: const Text(
+              "Sign Out",
+              style: TextStyle(color: Colors.white),
+            ),
           ),
           const SizedBox(height: 30),
         ],
@@ -228,18 +321,46 @@ class _AccountTabState extends State<_AccountTab> {
 
 class _UserDashboard extends State<UserDashboard> {
   int _selectedIndex = 0;
+  final PageController _pageController = PageController();
+  bool _swipeNavigationEnabled = true;
 
-  static const List<Widget> _widgetOptions = <Widget>[
+  List<Widget> get _widgetOptions => <Widget>[
     _HomeTab(),
     _SavedTab(),
     _ReminderTab(),
-    _AccountTab(),
+    _AccountTab(
+      swipeNavigationEnabled: _swipeNavigationEnabled,
+      onSwipeNavigationChanged: _toggleSwipeNavigation,
+    ),
   ];
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.ease,
+    );
+  }
+
+  void _onPageChanged(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  void _toggleSwipeNavigation(bool value) {
+    setState(() {
+      _swipeNavigationEnabled = value;
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -247,7 +368,7 @@ class _UserDashboard extends State<UserDashboard> {
     return Scaffold(
       backgroundColor: Colors.white,
       bottomNavigationBar: NavigationBar(
-        backgroundColor: const Color(0xFFFFFFFF),
+        backgroundColor: const Color(0xFFECEFE6),
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,
         indicatorColor: Colors.green,
@@ -274,7 +395,17 @@ class _UserDashboard extends State<UserDashboard> {
           ),
         ],
       ),
-      body: SafeArea(child: _widgetOptions[_selectedIndex]),
+      body: SafeArea(
+        child: PageView(
+          controller: _pageController,
+          onPageChanged: _onPageChanged,
+          children: _widgetOptions,
+          physics:
+              _swipeNavigationEnabled
+                  ? const BouncingScrollPhysics()
+                  : const NeverScrollableScrollPhysics(),
+        ),
+      ),
     );
   }
 }
@@ -287,6 +418,44 @@ class _HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<_HomeTab> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  // Example event data
+  final List<Map<String, String>> _allEvents = [
+    {
+      'image': 'EXPOEVENT.png',
+      'title': 'Expo iFood',
+      'organiser': 'Pavillion Bukit Jalil',
+      'tags': 'Coffee,Japanese Food,Pastry',
+      'date': 'Fri, 11th July, 2:30pm',
+    },
+    {
+      'image': 'COFFEEFEST.png',
+      'title': 'Coffee Fest',
+      'organiser': 'KLCC',
+      'tags': 'Coffee,Pastry',
+      'date': 'Sat, 12th July, 10:00am',
+    },
+    // Add more events as needed
+  ];
+
+  List<Map<String, String>> get _filteredEvents {
+    if (_searchQuery.isEmpty) return _allEvents;
+    return _allEvents.where((event) {
+      final query = _searchQuery.toLowerCase();
+      return event['title']!.toLowerCase().contains(query) ||
+          event['organiser']!.toLowerCase().contains(query) ||
+          event['tags']!.toLowerCase().contains(query);
+    }).toList();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -298,6 +467,7 @@ class _HomeTabState extends State<_HomeTab> {
             children: [
               Expanded(
                 child: TextField(
+                  controller: _searchController,
                   decoration: InputDecoration(
                     hintText: 'Search events...',
                     prefixIcon: Icon(Icons.search),
@@ -305,6 +475,11 @@ class _HomeTabState extends State<_HomeTab> {
                       borderRadius: BorderRadius.circular(24.0),
                     ),
                   ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
                 ),
               ),
               SizedBox(width: 10),
@@ -332,9 +507,11 @@ class _HomeTabState extends State<_HomeTab> {
           // Event list
           Expanded(
             child: ListView.builder(
-              itemCount: 5,
-              itemBuilder:
-                  (context, index) => EventCard(imageName: 'EXPOEVENT.png'),
+              itemCount: _filteredEvents.length,
+              itemBuilder: (context, index) {
+                final event = _filteredEvents[index];
+                return EventCard(imageName: event['image'] ?? 'EXPOEVENT.png');
+              },
             ),
           ),
         ],

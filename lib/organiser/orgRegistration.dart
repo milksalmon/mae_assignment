@@ -3,6 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'orgDashboard.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class OrganiserRegister extends StatefulWidget {
   const OrganiserRegister({super.key});
@@ -45,7 +48,7 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
     }
   }
 
-  void _registerOrganiser() {
+  Future<void> _registerOrganiser() async {
     if (_formKey.currentState!.validate()) {
       if (_permitFile == null || _ssmFile == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -54,16 +57,64 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
             backgroundColor: Colors.red,
           ),
         );
-        return; // Stop registration if files are missing
+        return;
       }
 
-      // TODO: Upload files, validate data, save to backend
+      try {
+        // Create organiser account
+        UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
 
-      // Navigate to organiser dashboard
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const OrganiserDashboard()),
-      );
+        final uid = userCredential.user?.uid;
+        if (uid == null) throw Exception('User ID not found');
+
+        // Upload files to Firebase Storage
+        final permitRef = FirebaseStorage.instance.ref().child('organisers/$uid/permit.${_permitFile!.path.split('.').last}');
+        final ssmRef = FirebaseStorage.instance.ref().child('organisers/$uid/ssm.${_ssmFile!.path.split('.').last}');
+
+        final permitUploadTask = permitRef.putFile(_permitFile!);
+        final ssmUploadTask = ssmRef.putFile(_ssmFile!);
+
+        final permitSnapshot = await permitUploadTask;
+        final ssmSnapshot = await ssmUploadTask;
+
+        final permitUrl = await permitSnapshot.ref.getDownloadURL();
+        final ssmUrl = await ssmSnapshot.ref.getDownloadURL();
+
+        // Save organiser details to Firestore
+        await FirebaseFirestore.instance.collection('organisers').doc(uid).set({
+          'createdAt': FieldValue.serverTimestamp(),
+          'organizationName': _orgNameController.text.trim(),
+          'picName': _picNameController.text.trim(),
+          'phoneNumber': _phoneController.text.trim(),
+          'email': _emailController.text.trim(),
+          'role': 'organiser',
+          'permitUrl': permitUrl,
+          'ssmUrl': ssmUrl,
+        });
+
+        // Optionally send email verification
+        await userCredential.user?.sendEmailVerification();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account created! Please check your email to verify your account.')),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const OrganiserDashboard()),
+        );
+      } on FirebaseAuthException catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Registration failed')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -99,7 +150,7 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
           style: GoogleFonts.montserrat(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.grey[700],
+            color: const Color(0xFFFF2F67),
           ),
         ),
         backgroundColor: Colors.white,
