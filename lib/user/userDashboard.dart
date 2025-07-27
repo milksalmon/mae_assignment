@@ -330,6 +330,44 @@ class _HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<_HomeTab> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  // Example event data
+  final List<Map<String, String>> _allEvents = [
+    {
+      'image': 'EXPOEVENT.png',
+      'title': 'Expo iFood',
+      'organiser': 'Pavillion Bukit Jalil',
+      'tags': 'Coffee,Japanese Food,Pastry',
+      'date': 'Fri, 11th July, 2:30pm',
+    },
+    {
+      'image': 'COFFEEFEST.png',
+      'title': 'Coffee Fest',
+      'organiser': 'KLCC',
+      'tags': 'Coffee,Pastry',
+      'date': 'Sat, 12th July, 10:00am',
+    },
+    // Add more events as needed
+  ];
+
+  List<Map<String, String>> get _filteredEvents {
+    if (_searchQuery.isEmpty) return _allEvents;
+    return _allEvents.where((event) {
+      final query = _searchQuery.toLowerCase();
+      return event['title']!.toLowerCase().contains(query) ||
+             event['organiser']!.toLowerCase().contains(query) ||
+             event['tags']!.toLowerCase().contains(query);
+    }).toList();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -341,6 +379,7 @@ class _HomeTabState extends State<_HomeTab> {
             children: [
               Expanded(
                 child: TextField(
+                  controller: _searchController,
                   decoration: InputDecoration(
                     hintText: 'Search events...',
                     prefixIcon: Icon(Icons.search),
@@ -348,6 +387,11 @@ class _HomeTabState extends State<_HomeTab> {
                       borderRadius: BorderRadius.circular(24.0),
                     ),
                   ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
                 ),
               ),
               SizedBox(width: 10),
@@ -375,9 +419,11 @@ class _HomeTabState extends State<_HomeTab> {
           // Event list
           Expanded(
             child: ListView.builder(
-              itemCount: 5,
-              itemBuilder:
-                  (context, index) => EventCard(imageName: 'EXPOEVENT.png'),
+              itemCount: _filteredEvents.length,
+              itemBuilder: (context, index) {
+                final event = _filteredEvents[index];
+                return EventCard(imageName: event['image'] ?? 'EXPOEVENT.png');
+              },
             ),
           ),
         ],
