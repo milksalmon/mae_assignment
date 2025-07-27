@@ -71,8 +71,8 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
         if (uid == null) throw Exception('User ID not found');
 
         // Upload files to Firebase Storage
-        final permitRef = FirebaseStorage.instance.ref().child('organisers/$uid/permit.${_permitFile!.path.split('.').last}');
-        final ssmRef = FirebaseStorage.instance.ref().child('organisers/$uid/ssm.${_ssmFile!.path.split('.').last}');
+        final permitRef = FirebaseStorage.instance.ref().child('organisers/attachment/permit.${_permitFile!.path.split('.').last}');
+        final ssmRef = FirebaseStorage.instance.ref().child('organisers/attachment/ssm.${_ssmFile!.path.split('.').last}');
 
         final permitUploadTask = permitRef.putFile(_permitFile!);
         final ssmUploadTask = ssmRef.putFile(_ssmFile!);
@@ -90,16 +90,9 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
           'picName': _picNameController.text.trim(),
           'phoneNumber': _phoneController.text.trim(),
           'email': _emailController.text.trim(),
-          'attachments': [permitUrl, ssmUrl],
-          'description': '',
-          'status': 'Pending',
-        });
-
-        await FirebaseFirestore.instance.collection('users').doc(uid).set({
-          'createdAt': FieldValue.serverTimestamp(),
-          'name': _picNameController.text.trim(),
-          'email':  _emailController.text.trim(),
           'role': 'organiser',
+          'permitUrl': permitUrl,
+          'ssmUrl': ssmUrl,
         });
 
         // Optionally send email verification
@@ -145,7 +138,6 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 252, 252),
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -161,7 +153,7 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
             color: const Color(0xFFFF2F67),
           ),
         ),
-        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+        backgroundColor: Colors.white,
         elevation: 1,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.black),
@@ -169,7 +161,6 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
-
           key: _formKey,
           child: ListView(
             children: [
