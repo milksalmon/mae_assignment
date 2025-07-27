@@ -90,9 +90,9 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
           'picName': _picNameController.text.trim(),
           'phoneNumber': _phoneController.text.trim(),
           'email': _emailController.text.trim(),
-          'role': 'organiser',
-          'permitUrl': permitUrl,
-          'ssmUrl': ssmUrl,
+          'attachments': [permitUrl, ssmUrl],
+          'description': '',
+          'status': 'Pending',
         });
 
         // Optionally send email verification
@@ -138,6 +138,7 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 255, 252, 252),
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -153,7 +154,7 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
             color: const Color(0xFFFF2F67),
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         elevation: 1,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.black),
@@ -161,6 +162,7 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
+
           key: _formKey,
           child: ListView(
             children: [
