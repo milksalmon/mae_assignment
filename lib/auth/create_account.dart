@@ -80,6 +80,20 @@ class _CreateAccountState extends State<CreateAccount> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+            appBar: AppBar(
+              title: Text(
+          'Create an Account',
+          style: GoogleFonts.montserrat(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFFFF2F67),
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 1,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
       backgroundColor: const Color.fromARGB(255, 246, 245, 245),
       body: SafeArea(
         child: Padding(
@@ -88,17 +102,19 @@ class _CreateAccountState extends State<CreateAccount> {
             key: _formKey,
             child: ListView(
               children: [
-                const SizedBox(height: 30),
-                Center(
-                  child: Text(
-                    "Create an Account",
-                    style: GoogleFonts.montserrat(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w800, //extra bold
-                      color: const Color(0xFFFF2F67),
-                    ),
-                  ),
-                ),
+                const SizedBox(height: 10),
+
+                
+                // Center(
+                //   child: Text(
+                //     "Create an Account",
+                //     style: GoogleFonts.montserrat(
+                //       fontSize: 40,
+                //       fontWeight: FontWeight.w800, //extra bold
+                //       color: const Color(0xFFFF2F67),
+                //     ),
+                //   ),
+                // ),
                 const SizedBox(height: 40),
                 TextFormField(
                   controller: firstNameController,
