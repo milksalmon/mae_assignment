@@ -14,8 +14,8 @@ class CreateAccount extends StatefulWidget {
 
 class _CreateAccountState extends State<CreateAccount> {
   final _formKey = GlobalKey<FormState>();
-  final firstNameController = TextEditingController();
-  final lastNameController = TextEditingController();
+  final nameController = TextEditingController();
+  // final lastNameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
@@ -36,7 +36,7 @@ class _CreateAccountState extends State<CreateAccount> {
             );
 
         await userCredential.user?.updateDisplayName(
-          '${firstNameController.text} ${lastNameController.text}',
+          '${nameController.text}',
         );
 
         // Save to Firestore
@@ -45,8 +45,8 @@ class _CreateAccountState extends State<CreateAccount> {
             .doc(userCredential.user?.uid)
             .set({
               'createdAt': FieldValue.serverTimestamp(),
-              'firstName': firstNameController.text.trim(),
-              'lastName': lastNameController.text.trim(),
+              'name': nameController.text.trim(),
+              // 'lastName': lastNameController.text.trim(),
               'email': emailController.text.trim(),
               'role': 'user',
             });
@@ -76,8 +76,8 @@ class _CreateAccountState extends State<CreateAccount> {
 
   @override
   void dispose() {
-    firstNameController.dispose();
-    lastNameController.dispose();
+    nameController.dispose();
+    // lastNameController.dispose();
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
@@ -123,30 +123,30 @@ class _CreateAccountState extends State<CreateAccount> {
                 // ),
                 const SizedBox(height: 40),
                 TextFormField(
-                  controller: firstNameController,
+                  controller: nameController,
                   decoration: InputDecoration(
-                    labelText: 'First Name',
+                    labelText: 'Name',
                     labelStyle: GoogleFonts.montserrat(),
                     border: const OutlineInputBorder(),
                   ),
                   validator:
                       (value) =>
                           value!.isEmpty
-                              ? 'Please enter your first name'
+                              ? 'Please enter your name'
                               : null,
                 ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: lastNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Last Name',
-                    labelStyle: GoogleFonts.montserrat(),
-                    border: const OutlineInputBorder(),
-                  ),
-                  validator:
-                      (value) =>
-                          value!.isEmpty ? 'Please enter your last name' : null,
-                ),
+                // const SizedBox(height: 20),
+                // TextFormField(
+                //   controller: lastNameController,
+                //   decoration: InputDecoration(
+                //     labelText: 'Last Name',
+                //     labelStyle: GoogleFonts.montserrat(),
+                //     border: const OutlineInputBorder(),
+                //   ),
+                //   validator:
+                //       (value) =>
+                //           value!.isEmpty ? 'Please enter your last name' : null,
+                // ),
                 const SizedBox(height: 20),
                 TextFormField(
                   controller: emailController,

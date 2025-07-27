@@ -36,8 +36,7 @@ class AuthService {
         // AUTO CREATED FIRESTORE USER
         await _firestore.collection('users').doc(user.uid).set({
           'email': user.email,
-          'firstName': user.displayName?.split(' ').first ?? '',
-          'lastName': user.displayName?.split(' ').last ?? '',
+          'name': user.displayName,
           'role': 'user',
           'createdAt': FieldValue.serverTimestamp(),
         });
