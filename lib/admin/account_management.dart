@@ -1,10 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart' show canLaunchUrl, launchUrl;
 import 'package:url_launcher/url_launcher_string.dart';
 import '../providers/auth_provider.dart';
+import 'package:dio/dio.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
 
 class OrganizerAccountManagement extends StatefulWidget {
   const OrganizerAccountManagement({super.key});
@@ -380,7 +384,62 @@ class _OrganizerAccountManagementState
                                     Icons.download_rounded,
                                     color: Colors.black,
                                   ),
-                                  onTap: () => onLaunchUrl(url),
+                                  onTap: () async {
+                                    Navigator.pop(context);
+                                    final status =
+                                        await Permission.storage.request();
+
+                                    if (status.isGranted) {
+                                      try {
+                                        final downloadsDir =
+                                            await getExternalStorageDirectories(
+                                              type: StorageDirectory.downloads,
+                                            );
+                                        if (downloadsDir == null ||
+                                            downloadsDir.isEmpty) {
+                                          throw 'Downloads directory not available';
+                                        }
+                                        final savePath =
+                                            '${downloadsDir.first.path}/$fileName';
+                                        await Dio().download(url, savePath);
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Downloaded to $savePath',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Download failed: $e',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    } else {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Storage permission denied',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
                                 );
                               }).toList(),
                         ),
