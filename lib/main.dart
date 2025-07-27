@@ -19,7 +19,7 @@ import 'admin/admin_dashboard.dart';
 import 'home.dart';
 import 'user/event_page.dart';
 import 'admin/account_management.dart';
-import 'organiser/orgDashboard.dart';
+// import 'organiser/orgDashboard.dart';
 
 // Providers
 import 'providers/auth_provider.dart'; // You should create this if not yet created
@@ -33,11 +33,15 @@ Future<void> main() async {
   final notificationSettings = await FirebaseMessaging.instance
       .requestPermission(provisional: true);
 
-  // For apple platforms, ensure the APNS token is available before making any FCM plugin API calls
-  final apnsToken = await FirebaseMessaging.instance.getToken();
-  if (apnsToken != null) {
-    // APNS token is available, make FCM plugin API requests...
-    print('FCM Token is:' + apnsToken);
+  try {
+    // For apple platforms, ensure the APNS token is available before making any FCM plugin API calls
+    final apnsToken = await FirebaseMessaging.instance.getToken();
+    if (apnsToken != null) {
+      // APNS token is available, make FCM plugin API requests...
+      print('FCM Token is:' + apnsToken);
+    }
+  } catch (e) {
+    print('Error fetching FCM token: $e');
   }
 
   FirebaseMessaging.instance.onTokenRefresh

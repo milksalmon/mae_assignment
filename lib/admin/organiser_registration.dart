@@ -240,60 +240,49 @@ Widget buildRequestCard({
                                 trailing: const Icon(Icons.download),
                                 onTap: () async {
                                   Navigator.pop(context);
-                                  final status =
-                                      await Permission.storage.request();
-                                  // final path =
-                                  //     '${downloadsDir!.path}/$fileName';
-
-                                  if (status.isGranted) {
-                                    // final dir =
-                                    //     await getExternalStorageDirectory();
-
-                                    try {
-                                      final downloadsDir =
-                                          await getExternalStorageDirectories(
-                                            type: StorageDirectory.downloads,
-                                          );
-                                      if (downloadsDir == null ||
-                                          downloadsDir.isEmpty) {
-                                        throw 'Downloads directory not available';
-                                      }
-                                      final savePath =
-                                          '${downloadsDir.first.path}/$fileName';
-                                      await Dio().download(url, savePath);
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Downlaoded to $savePath',
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                    } catch (e) {
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Download failed: $e',
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  } else {
+                                  final permissionGranted =
+                                      await _requestStoragePermission();
+                                  if (!permissionGranted) {
                                     if (context.mounted) {
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
                                         const SnackBar(
                                           content: Text(
-                                            'Storage permission denied',
+                                            'Storage Permission Denied',
                                           ),
+                                        ),
+                                      );
+                                    }
+                                    return;
+                                  }
+
+                                  try {
+                                    final directory = Directory(
+                                      '/storage/emulated/0/Download',
+                                    );
+                                    final savePath =
+                                        '${directory.path}/$fileName';
+                                    await Dio().download(url, savePath);
+
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Downloaded to $savePath',
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Download failed: $e'),
                                         ),
                                       );
                                     }
@@ -357,4 +346,17 @@ Widget buildRequestCard({
       ),
     ),
   );
+}
+
+// FUNCTION TO REQUEST WRITE INTERNAL STORAGE
+Future<bool> _requestStoragePermission() async {
+  if (await Permission.storage.request().isGranted) {
+    return true;
+  }
+
+  if (await Permission.manageExternalStorage.request().isGranted) {
+    return true;
+  }
+
+  return false;
 }

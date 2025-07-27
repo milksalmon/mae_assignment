@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -386,47 +388,12 @@ class _OrganizerAccountManagementState
                                   ),
                                   onTap: () async {
                                     Navigator.pop(context);
-                                    final status =
-                                        await Permission.storage.request();
+                                    final permissionGranted =
+                                        await _requestStoragePermission();
+                                    // final status =
+                                    //     await Permission.storage.request();
 
-                                    if (status.isGranted) {
-                                      try {
-                                        final downloadsDir =
-                                            await getExternalStorageDirectories(
-                                              type: StorageDirectory.downloads,
-                                            );
-                                        if (downloadsDir == null ||
-                                            downloadsDir.isEmpty) {
-                                          throw 'Downloads directory not available';
-                                        }
-                                        final savePath =
-                                            '${downloadsDir.first.path}/$fileName';
-                                        await Dio().download(url, savePath);
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Downloaded to $savePath',
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      } catch (e) {
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Download failed: $e',
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    } else {
+                                    if (!permissionGranted) {
                                       if (context.mounted) {
                                         ScaffoldMessenger.of(
                                           context,
@@ -434,6 +401,48 @@ class _OrganizerAccountManagementState
                                           const SnackBar(
                                             content: Text(
                                               'Storage permission denied',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                      return;
+                                    }
+
+                                    // if (status.isGranted) {
+                                    try {
+                                      final directory = Directory(
+                                        '/storage/emulated/0/Download',
+                                      );
+                                      final savePath =
+                                          '${directory.path}/$fileName';
+
+                                      await Dio().download(url, savePath);
+
+                                      // final downloadsDir =
+                                      //     await getExternalStorageDirectory();
+                                      // if (downloadsDir == null) {
+                                      //   throw 'Downloads directory not available';
+                                      // }
+
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Downloaded to $savePath',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Download failed: $e',
                                             ),
                                           ),
                                         );
@@ -496,4 +505,17 @@ String _formatCount(int value) {
   } else {
     return value.toString();
   }
+}
+
+// FUNCTION TO REQUEST WRITE INTERNAL STORAGE
+Future<bool> _requestStoragePermission() async {
+  if (await Permission.storage.request().isGranted) {
+    return true;
+  }
+
+  if (await Permission.manageExternalStorage.request().isGranted) {
+    return true;
+  }
+
+  return false;
 }
