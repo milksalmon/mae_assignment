@@ -4,12 +4,13 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
-import 'package:mae_assignment/user/userDashboard.dart';
-
 class UploadEventForm extends StatefulWidget {
   @override
   _UploadEventFormState createState() => _UploadEventFormState();
 }
+
+LatLng _selectedLocation = LatLng(3.1390, 101.6869); // Kuala Lumpur
+Set<Marker> _markers = {};
 
 class _UploadEventFormState extends State<UploadEventForm> {
   final _formKey = GlobalKey<FormState>();
@@ -80,6 +81,19 @@ class _UploadEventFormState extends State<UploadEventForm> {
       });
     }
   }
+
+  void _onMapTap(LatLng position) {
+  setState(() {
+    _selectedLocation = position;
+    _markers = {
+      Marker(
+        markerId: MarkerId("selected-location"),
+        position: position,
+      ),
+    };
+  });
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -179,24 +193,55 @@ class _UploadEventFormState extends State<UploadEventForm> {
               Text("Location"),
               SizedBox(
                 height: 200,
-                child: GoogleMap(
-                  initialCameraPosition: CameraPosition(
-                    target: LatLng(3.1390, 101.6869), // Kuala Lumpur
-                    zoom: 14.0,
-                  ),
-                  markers: {
-                    Marker(
-                      markerId: MarkerId("selected-location"),
-                      position: LatLng(3.1390, 101.6869),
-                    ),
-                  },
-                  onMapCreated: (GoogleMapController controller) {
-                    // Optional: store controller in a variable if needed
-                  },
-                  myLocationEnabled: true,
-                  zoomControlsEnabled: false,
+                child:GoogleMap(
+                initialCameraPosition: CameraPosition(
+                  target: _selectedLocation ?? LatLng(3.1390, 101.6869),
+                  zoom: 14.0,
                 ),
+                markers: _markers,
+                onTap: (LatLng tappedPoint) {
+                  setState(() {
+                    _selectedLocation = tappedPoint;
+                    _markers = {
+                      Marker(
+                        markerId: MarkerId("selected-location"),
+                        position: tappedPoint,
+                      ),
+                    };
+                  });
+                },
+                onMapCreated: (GoogleMapController controller) {
+                  setState(() {
+                    _markers = {
+                      Marker(
+                        markerId: MarkerId("selected-location"),
+                        position: _selectedLocation ?? LatLng(3.1390, 101.6869),
+                      ),
+                    };
+                  });
+                },
+                myLocationEnabled: true,
+                zoomControlsEnabled: false,
               ),
+              ),
+              SizedBox(height: 10),
+              Text(
+                "Lat: ${_selectedLocation?.latitude}, Lng: ${_selectedLocation?.longitude}",
+                style: TextStyle(fontSize: 14),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  // TODO: Save to Firebase 
+                  print("Saved location: $_selectedLocation");
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Location saved!')),
+                  );
+                },
+                child: Text("Save Location"),
+
+                
+              ),
+
 
               SizedBox(height: 16),
               SwitchListTile(
