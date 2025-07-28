@@ -1,20 +1,62 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class UploadEventForm extends StatefulWidget {
   @override
   _UploadEventFormState createState() => _UploadEventFormState();
 }
 
+class EventMap extends StatelessWidget {
+  final LatLng selectedLocation;
+  final Set<Marker> markers;
+  final Function(LatLng) onMapTap;
+  final Function(GoogleMapController) onMapCreated;
+
+  const EventMap({
+    Key? key,
+    required this.selectedLocation,
+    required this.markers,
+    required this.onMapTap,
+    required this.onMapCreated,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 200,
+      child: GoogleMap(
+        initialCameraPosition: CameraPosition(
+          target: selectedLocation,
+          zoom: 14.0,
+        ),
+        markers: markers,
+        onTap: onMapTap,
+        onMapCreated: onMapCreated,
+        zoomControlsEnabled: true,
+        myLocationButtonEnabled: true,
+        myLocationEnabled: true,
+        gestureRecognizers: {
+          Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
+        },
+      ),
+    );
+  }
+}
+
 LatLng _selectedLocation = LatLng(3.1390, 101.6869); // Kuala Lumpur
 Set<Marker> _markers = {};
 
 class _UploadEventFormState extends State<UploadEventForm> {
-  bool _mapTouched = false;
+  bool _isUploading = false;
   late GoogleMapController _mapController;
   final _formKey = GlobalKey<FormState>();
 
@@ -39,11 +81,21 @@ class _UploadEventFormState extends State<UploadEventForm> {
 
   @override
   void dispose() {
+    _mapController.dispose();
     _eventNameController.dispose();
     _hashtagsController.dispose();
     _descriptionController.dispose();
     _whatsappLinkController.dispose();
     super.dispose();
+  }
+
+  // TO CHECK OF UNAUTHENTICATED USER
+  @override
+  void initState() {
+    super.initState();
+    if (FirebaseAuth.instance.currentUser == null) {
+      Navigator.of(context).pushReplacementNamed('/login');
+    }
   }
 
   Future<void> _pickImage() async {
@@ -218,54 +270,14 @@ class _UploadEventFormState extends State<UploadEventForm> {
                 //AIzaSyB30HgRfK2vOxqIffJO-SBMH5K6diEg7LM - gmaps api key
                 SizedBox(height: 16),
                 Text("Location"),
-                GestureDetector(
-                  onVerticalDragDown: (_) {},
-                  child: SizedBox(
-                    height: 200,
-                    child: GoogleMap(
-                      initialCameraPosition: CameraPosition(
-                        target: _selectedLocation ?? LatLng(3.1390, 101.6869),
-                        zoom: 14.0,
-                      ),
-                      markers: _markers,
-                      onTap: (LatLng tappedPoint) {
-                        setState(() {
-                          _selectedLocation = tappedPoint;
-                          _markers = {
-                            Marker(
-                              markerId: MarkerId("selected-location"),
-                              position: tappedPoint,
-                            ),
-                          };
-                        });
-                      },
-                      onMapCreated: (GoogleMapController controller) {
-                        setState(() {
-                          _markers = {
-                            Marker(
-                              markerId: MarkerId("selected-location"),
-                              position:
-                                  _selectedLocation ?? LatLng(3.1390, 101.6869),
-                            ),
-                          };
-                        });
-                      }, //accept when merging
-                      zoomControlsEnabled: true,
-                      zoomGesturesEnabled: true,
-                      scrollGesturesEnabled: true,
-                      rotateGesturesEnabled: true,
-                      tiltGesturesEnabled: true,
-                      myLocationEnabled: true,
-                      myLocationButtonEnabled: true,
-                      compassEnabled: true,
-                      gestureRecognizers: {
-                        Factory<OneSequenceGestureRecognizer>(
-                          //accept when merging
-                          () => EagerGestureRecognizer(),
-                        ),
-                      },
-                    ),
-                  ),
+                EventMap(
+                  selectedLocation:
+                      _selectedLocation ?? LatLng(3.1390, 101.6869),
+                  markers: _markers,
+                  onMapTap: _onMapTap,
+                  onMapCreated: (controller) {
+                    _mapController = controller;
+                  },
                 ),
                 SizedBox(height: 10),
                 Text(
@@ -322,10 +334,12 @@ class _UploadEventFormState extends State<UploadEventForm> {
                 TextFormField(
                   controller: _whatsappLinkController,
                   decoration: InputDecoration(
-                    labelText: "WhatsApp Link",
+                    labelText: "WhatsApp Number",
                     helperText:
-                        "Format: https://wa.me/60XXXXXXXXXX", //acceopt when merging
+                        "Enter Whatsapp Number (e.g., 0123456789)", //accept when merging
                   ),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   validator: (value) => value!.isEmpty ? "Required" : null,
                 ),
                 SizedBox(height: 16),
@@ -370,21 +384,162 @@ class _UploadEventFormState extends State<UploadEventForm> {
                 SizedBox(height: 20),
                 Center(
                   //accept when merging
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        // Submit logic here
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Event submitted!")),
-                        );
-                      }
-                    },
-                    child: Text("Submit Event"),
-                  ),
+                  child:
+                      _isUploading
+                          ? CircularProgressIndicator()
+                          : ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                            ),
+
+                            onPressed: () async {
+                              print(
+                                'Current User:  ${FirebaseAuth.instance.currentUser}',
+                              );
+                              if (_formKey.currentState!.validate()) {
+                                setState(() {
+                                  _isUploading = true;
+                                });
+
+                                try {
+                                  // GETTING ORGANISER NAME
+                                  final uid =
+                                      FirebaseAuth.instance.currentUser?.uid;
+                                  String organiserName = '';
+
+                                  if (uid != null) {
+                                    final userDoc =
+                                        await FirebaseFirestore.instance
+                                            .collection('users')
+                                            .doc(uid)
+                                            .get();
+                                    if (userDoc.exists) {
+                                      organiserName =
+                                          userDoc.data()?['name'] ?? '';
+                                    }
+                                  }
+
+                                  final orgNameForPath = organiserName
+                                      .replaceAll(' ', '_');
+                                  final organiserPath =
+                                      'organisers/$orgNameForPath/events';
+
+                                  // WHATSAPP LOGIC LINK HERE
+                                  final String whatsappNumber =
+                                      _whatsappLinkController.text.trim();
+                                  final String whatsappUrl =
+                                      'https://wa.me/$whatsappNumber';
+                                  // COMBINING DATE AND TIME START
+                                  final DateTime startDateTime = DateTime(
+                                    _startDate!.year,
+                                    _startDate!.month,
+                                    _startDate!.day,
+                                    _eventStartTime?.hour ?? 0,
+                                    _eventStartTime?.minute ?? 0,
+                                  );
+
+                                  final DateTime endDateTime = DateTime(
+                                    _endDate!.year,
+                                    _endDate!.month,
+                                    _endDate!.day,
+                                    _eventEndTime?.hour ?? 0,
+                                    _eventEndTime?.minute ?? 0,
+                                  );
+                                  // COMBINING DATE AND TIME END
+
+                                  // UPLOADING COVER IMAGES
+                                  String? coverImageUrl;
+                                  if (_coverImage != null) {
+                                    coverImageUrl = await uploadFile(
+                                      _coverImage!,
+                                      organiserPath,
+                                    );
+                                  }
+
+                                  //UPLOADING OTHER MEDIA FILES
+                                  List<String> mediaUrls = [];
+                                  for (var media in _mediaFiles) {
+                                    final url = await uploadFile(
+                                      media,
+                                      organiserPath,
+                                    );
+                                    mediaUrls.add(url);
+                                  }
+
+                                  // PREPARE DATA MAP
+                                  Map<String, dynamic> eventData = {
+                                    'eventName':
+                                        _eventNameController.text.trim(),
+                                    'tags':
+                                        _hashtagsController.text
+                                            .trim()
+                                            .split(',')
+                                            .map((e) => e.trim())
+                                            .toList(),
+                                    'startDate': Timestamp.fromDate(
+                                      startDateTime,
+                                    ),
+                                    'endDate': Timestamp.fromDate(endDateTime),
+                                    'description':
+                                        _descriptionController.text.trim(),
+                                    'location': GeoPoint(
+                                      _selectedLocation!.latitude,
+                                      _selectedLocation!.longitude,
+                                    ),
+                                    'parking':
+                                        _parkingAvailable
+                                            ? _selectedParkingType ?? "Unknown"
+                                            : "None",
+                                    'wsLink': whatsappUrl,
+                                    'images':
+                                        coverImageUrl ??
+                                        '', //IMPLEMENT IMAGE UPLOAD
+                                    'media': mediaUrls,
+                                    'orgName': organiserName,
+                                  };
+                                  await FirebaseFirestore.instance
+                                      .collection('event')
+                                      .add(eventData);
+                                  setState(() {
+                                    _isUploading = false;
+                                  });
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        "Event uploaded successfully!",
+                                      ),
+                                    ),
+                                  );
+
+                                  // OPTIONAL AFTER CLICK TO CLEAR FORM OR NAVIGATE
+                                  Navigator.pushReplacementNamed(
+                                    context,
+                                    '/orgDashboard',
+                                  );
+                                } catch (e, st) {
+                                  print('Upload error: $e\n$st');
+                                  setState(() {
+                                    _isUploading = false;
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        "Error uploading event: $e",
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                                // Submit logic here
+                                // ScaffoldMessenger.of(context).showSnackBar(
+                                //   SnackBar(content: Text("Event submitted!")),
+                                // );
+                              }
+                            },
+                            child: Text("Submit Event"),
+                          ),
                 ),
               ],
             ),
@@ -393,4 +548,13 @@ class _UploadEventFormState extends State<UploadEventForm> {
       ),
     );
   }
+}
+
+// HELPER TO UPLOAD FILE TO FIREBASE STORAGE
+Future<String> uploadFile(XFile file, String fullPath) async {
+  final ref = FirebaseStorage.instance.ref().child(
+    '$fullPath/${DateTime.now().millisecondsSinceEpoch}_${file.name}',
+  );
+  await ref.putFile(File(file.path));
+  return await ref.getDownloadURL();
 }
