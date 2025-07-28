@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
+import 'orgAccount.dart';
 import 'upload_event.dart';
 
 String organiserStatus = "pending"; // Default: pending
@@ -21,6 +21,7 @@ class _OrganiserDashboardState extends State<OrganiserDashboard> {
     setState(() {
       _selectedIndex = index;
     });
+ 
   }
 
   @override
@@ -39,68 +40,78 @@ class _OrganiserDashboardState extends State<OrganiserDashboard> {
 
     if (doc.exists) {
       setState(() {
-        organiserStatus = doc['status']; // e.g., 'approved' or 'pending'
+        organiserStatus = doc['status'];
       });
     }
   }
 
-@override
-Widget build(BuildContext context) {
-  final List<Widget> pages = [
-    organiserStatus.toLowerCase() == "approved"
-        ? UploadEventForm()
-        : pendingApprovalWidget(),
-    Center(child: Text("Notification")),
-    Center(child: Text("Account")),
-  ];
-
-  return Scaffold(
-    appBar: AppBar(
-      automaticallyImplyLeading: false,
-      title: Padding(
-        padding: const EdgeInsets.only(top: 12),
-        child: Row(
-          children: [
-            Image.asset('assets/logo.png', height: 80, width: 80),
-            const SizedBox(width: 12),
-            Text(
-              'Welcome',
-              style: GoogleFonts.montserrat(
-                color: Colors.black87,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
-            ),
-          ],
-        ),
+  @override
+  Widget build(BuildContext context) {
+    final List<Widget> pages = [
+      organiserStatus.toLowerCase() == "approved"
+          ? accountApprovedWidget(
+            context,
+          ) //to help with merging yes accept this one
+          : pendingApprovalWidget(),
+      Center(child: Text("Notification")),
+      OrganiserAccountTab(
+        swipeNavigationEnabled: true,
+        onSwipeNavigationChanged: (value) { //accept this for merge
+          // Handle swipe state if needed
+        },
       ),
-    ),
-    body: pages[_selectedIndex],
-    bottomNavigationBar: NavigationBar(
-      backgroundColor: const Color(0xFFECEFE6),
-      selectedIndex: _selectedIndex,
-      onDestinationSelected: _onItemTapped,
-      indicatorColor: Colors.green,
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.event_outlined),
-          selectedIcon: Icon(Icons.event),
-          label: "Your Events",
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.notifications_outlined),
-          selectedIcon: Icon(Icons.notifications),
-          label: "Notifications",
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.person_outline),
-          selectedIcon: Icon(Icons.person),
-          label: "Account",
-        ),
-      ],
-    ),
-  );
-}
+    ];
+
+    return Scaffold(
+      appBar:
+          _selectedIndex == 0
+              ? AppBar(
+                automaticallyImplyLeading: false,
+                title: Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Row(
+                    children: [
+                      Image.asset('assets/logo.png', height: 80, width: 80),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Welcome',
+                        style: GoogleFonts.montserrat(
+                          color: Colors.black87,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+              : null,
+      body: pages[_selectedIndex],
+      bottomNavigationBar: NavigationBar(
+        backgroundColor: const Color(0xFFECEFE6),
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onItemTapped,
+        indicatorColor: Colors.green,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.event_outlined),
+            selectedIcon: Icon(Icons.event),
+            label: "Your Events",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.notifications_outlined),
+            selectedIcon: Icon(Icons.notifications),
+            label: "Notifications",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: "Account",
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 Widget pendingApprovalWidget() {
@@ -132,6 +143,57 @@ Widget pendingApprovalWidget() {
             "If you have any inquiries, reach out to us.",
             style: GoogleFonts.montserrat(fontSize: 16, color: Colors.black54),
             textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+@override //are u merging hahaha yes accept this
+Widget accountApprovedWidget(BuildContext context) {
+  return Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => UploadEventForm()),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 64),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    offset: Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add, color: Colors.pink),
+                  const SizedBox(width: 8),
+                  Text(
+                    "UPLOAD EVENT",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.pink,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
