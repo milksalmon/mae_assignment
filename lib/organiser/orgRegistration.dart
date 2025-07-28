@@ -145,6 +145,7 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F7F3),
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
