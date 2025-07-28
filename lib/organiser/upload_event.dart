@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
@@ -83,17 +84,13 @@ class _UploadEventFormState extends State<UploadEventForm> {
   }
 
   void _onMapTap(LatLng position) {
-  setState(() {
-    _selectedLocation = position;
-    _markers = {
-      Marker(
-        markerId: MarkerId("selected-location"),
-        position: position,
-      ),
-    };
-  });
-}
-
+    setState(() {
+      _selectedLocation = position;
+      _markers = {
+        Marker(markerId: MarkerId("selected-location"), position: position),
+      };
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -191,37 +188,52 @@ class _UploadEventFormState extends State<UploadEventForm> {
               //AIzaSyB30HgRfK2vOxqIffJO-SBMH5K6diEg7LM - gmaps api key
               SizedBox(height: 16),
               Text("Location"),
-              SizedBox(
-                height: 200,
-                child:GoogleMap(
-                initialCameraPosition: CameraPosition(
-                  target: _selectedLocation ?? LatLng(3.1390, 101.6869),
-                  zoom: 14.0,
+              GestureDetector(
+                onVerticalDragDown: (_) {},
+                child: SizedBox(
+                  height: 200,
+                  child: GoogleMap(
+                  initialCameraPosition: CameraPosition(
+                    target: _selectedLocation ?? LatLng(3.1390, 101.6869),
+                    zoom: 14.0,
+                  ),
+                  markers: _markers,
+                  onTap: (LatLng tappedPoint) {
+                    setState(() {
+                      _selectedLocation = tappedPoint;
+                      _markers = {
+                        Marker(
+                          markerId: MarkerId("selected-location"),
+                          position: tappedPoint,
+                        ),
+                      };
+                    });
+                  },
+                  onMapCreated: (GoogleMapController controller) {
+                    setState(() {
+                      _markers = {
+                        Marker(
+                          markerId: MarkerId("selected-location"),
+                          position:
+                              _selectedLocation ?? LatLng(3.1390, 101.6869),
+                        ),
+                      };
+                    });
+                  }, //accept when merging
+                  zoomControlsEnabled: true,
+                  zoomGesturesEnabled: true,
+                  scrollGesturesEnabled: true,
+                  rotateGesturesEnabled: true,
+                  tiltGesturesEnabled: true,
+                  myLocationEnabled: true,
+                  myLocationButtonEnabled: true,
+                  compassEnabled: true,
+                  gestureRecognizers: {
+                  Factory<OneSequenceGestureRecognizer>( //accept when merging
+                    () => EagerGestureRecognizer(),
+                  ),
+                },
                 ),
-                markers: _markers,
-                onTap: (LatLng tappedPoint) {
-                  setState(() {
-                    _selectedLocation = tappedPoint;
-                    _markers = {
-                      Marker(
-                        markerId: MarkerId("selected-location"),
-                        position: tappedPoint,
-                      ),
-                    };
-                  });
-                },
-                onMapCreated: (GoogleMapController controller) {
-                  setState(() {
-                    _markers = {
-                      Marker(
-                        markerId: MarkerId("selected-location"),
-                        position: _selectedLocation ?? LatLng(3.1390, 101.6869),
-                      ),
-                    };
-                  });
-                },
-                myLocationEnabled: true,
-                zoomControlsEnabled: false,
               ),
               ),
               SizedBox(height: 10),
@@ -231,17 +243,14 @@ class _UploadEventFormState extends State<UploadEventForm> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  // TODO: Save to Firebase 
+                  // TODO: Save to Firebase
                   print("Saved location: $_selectedLocation");
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Location saved!')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Location saved!')));
                 },
                 child: Text("Save Location"),
-
-                
               ),
-
 
               SizedBox(height: 16),
               SwitchListTile(

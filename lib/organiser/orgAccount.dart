@@ -197,7 +197,7 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
                             await FirebaseAuth.instance.signOut();
                             if (context.mounted) {
                               Navigator.of(context).pushNamedAndRemoveUntil(
-                                '/login', // Replace with your actual login route name
+                                '/login', 
                                 (route) => false,
                               );
                             }
