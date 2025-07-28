@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,8 +14,10 @@ class _UploadEventFormState extends State<UploadEventForm> {
   XFile? _coverImage;
   DateTime? _startDate;
   DateTime? _endDate;
-  TimeOfDay? _eventTime;
+  TimeOfDay? _eventStartTime;
+  TimeOfDay? _eventEndTime;
   bool _parkingAvailable = false;
+  String? _selectedParkingType;
   List<String> _parkingOptions = [];
   LatLng? _selectedLocation;
 
@@ -46,8 +49,8 @@ class _UploadEventFormState extends State<UploadEventForm> {
     final picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
+      firstDate: DateTime(2025),
+      lastDate: DateTime(2050),
     );
     if (picked != null) {
       setState(() {
@@ -60,14 +63,18 @@ class _UploadEventFormState extends State<UploadEventForm> {
     }
   }
 
-  Future<void> _pickTime() async {
+  Future<void> _pickTime({required bool isStart}) async {
     final picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
     );
     if (picked != null) {
       setState(() {
-        _eventTime = picked;
+        if (isStart) {
+          _eventStartTime = picked;
+        } else {
+          _eventEndTime = picked;
+        }
       });
     }
   }
@@ -89,12 +96,13 @@ class _UploadEventFormState extends State<UploadEventForm> {
                   height: 150,
                   width: double.infinity,
                   color: Colors.grey[300],
-                  child: _coverImage == null
-                      ? Icon(Icons.add_a_photo, size: 50)
-                      : Image.file(
-                          File(_coverImage!.path),
-                          fit: BoxFit.cover,
-                        ),
+                  child:
+                      _coverImage == null
+                          ? Icon(Icons.add_a_photo, size: 50)
+                          : Image.file(
+                            File(_coverImage!.path),
+                            fit: BoxFit.cover,
+                          ),
                 ),
               ),
               SizedBox(height: 16),
@@ -105,7 +113,7 @@ class _UploadEventFormState extends State<UploadEventForm> {
               ),
               TextFormField(
                 controller: _hashtagsController,
-                decoration: InputDecoration(labelText: "Hashtags"),
+                decoration: InputDecoration(labelText: "Tags"),
                 validator: (value) => value!.isEmpty ? "Required" : null,
               ),
               Row(
@@ -113,27 +121,50 @@ class _UploadEventFormState extends State<UploadEventForm> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () => _pickDate(isStart: true),
-                      child: Text(_startDate == null
-                          ? "Pick Start Date"
-                          : "Start: ${_startDate!.toLocal()}".split(' ')[0]),
+                      child: Text(
+                        _startDate == null
+                            ? "Pick Start Date"
+                            : "Start: ${_startDate!.toLocal().toString().split(' ')[0]}",
+                      ),
                     ),
                   ),
                   SizedBox(width: 8),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () => _pickDate(isStart: false),
-                      child: Text(_endDate == null
-                          ? "Pick End Date"
-                          : "End: ${_endDate!.toLocal()}".split(' ')[0]),
+                      child: Text(
+                        _endDate == null
+                            ? "Pick End Date"
+                            : "End: ${_endDate!.toLocal().toString().split(' ')[0]}",
+                      ),
                     ),
                   ),
                 ],
               ),
-              ElevatedButton(
-                onPressed: _pickTime,
-                child: Text(_eventTime == null
-                    ? "Pick Time"
-                    : "Time: ${_eventTime!.format(context)}"),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => _pickTime(isStart: true),
+                      child: Text(
+                        _eventStartTime == null
+                            ? "Pick Start Time"
+                            : "Start Time: ${_eventStartTime!.format(context)}",
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => _pickTime(isStart: false),
+                      child: Text(
+                        _eventEndTime == null
+                            ? "Pick End Time"
+                            : "End Time: ${_eventEndTime!.format(context)}",
+                      ),
+                    ),
+                  ),
+                ],
               ),
               TextFormField(
                 controller: _descriptionController,
@@ -141,13 +172,30 @@ class _UploadEventFormState extends State<UploadEventForm> {
                 decoration: InputDecoration(labelText: "Event Description"),
                 validator: (value) => value!.isEmpty ? "Required" : null,
               ),
+              //AIzaSyB30HgRfK2vOxqIffJO-SBMH5K6diEg7LM - gmaps api key
               SizedBox(height: 16),
-              Text("Location (Google Maps placeholder)"),
-              Container(
+              Text("Location"),
+              SizedBox(
                 height: 200,
-                color: Colors.grey[300],
-                child: Center(child: Text("Map goes here")), // Replace with real map
+                child: GoogleMap(
+                  initialCameraPosition: CameraPosition(
+                    target: LatLng(3.1390, 101.6869), // Kuala Lumpur
+                    zoom: 14.0,
+                  ),
+                  markers: {
+                    Marker(
+                      markerId: MarkerId("selected-location"),
+                      position: LatLng(3.1390, 101.6869),
+                    ),
+                  },
+                  onMapCreated: (GoogleMapController controller) {
+                    // Optional: store controller in a variable if needed
+                  },
+                  myLocationEnabled: true,
+                  zoomControlsEnabled: false,
+                ),
               ),
+
               SizedBox(height: 16),
               SwitchListTile(
                 title: Text("Parking Available"),
@@ -162,29 +210,23 @@ class _UploadEventFormState extends State<UploadEventForm> {
               if (_parkingAvailable)
                 Column(
                   children: [
-                    CheckboxListTile(
+                    RadioListTile<String>(
                       title: Text("Free Parking"),
-                      value: _parkingOptions.contains("Free"),
-                      onChanged: (val) {
+                      value: "Free",
+                      groupValue: _selectedParkingType,
+                      onChanged: (value) {
                         setState(() {
-                          if (val!) {
-                            _parkingOptions.add("Free");
-                          } else {
-                            _parkingOptions.remove("Free");
-                          }
+                          _selectedParkingType = value;
                         });
                       },
                     ),
-                    CheckboxListTile(
+                    RadioListTile<String>(
                       title: Text("Paid Parking"),
-                      value: _parkingOptions.contains("Paid"),
-                      onChanged: (val) {
+                      value: "Paid",
+                      groupValue: _selectedParkingType,
+                      onChanged: (value) {
                         setState(() {
-                          if (val!) {
-                            _parkingOptions.add("Paid");
-                          } else {
-                            _parkingOptions.remove("Paid");
-                          }
+                          _selectedParkingType = value;
                         });
                       },
                     ),
