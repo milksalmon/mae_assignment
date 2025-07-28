@@ -25,6 +25,7 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
   String organiserPhotoUrl = '';
   String phoneNumber = '';
   bool isLoading = true;
+  String? selectedReason;
 
   @override
   void initState() {
@@ -153,6 +154,7 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
                       const SizedBox(height: 20),
                       sectionTitle("Account Controls"),
                       const SizedBox(height: 10),
+
                       ElevatedButton(
                         onPressed: () {
                           // Navigate to edit organiser profile
@@ -163,7 +165,8 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
                         ),
                         child: const Text("Edit Profile"),
                       ),
-                      const SizedBox(height: 8),
+
+                      const SizedBox(height: 10), // <-- same height
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
@@ -197,13 +200,182 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
                             await FirebaseAuth.instance.signOut();
                             if (context.mounted) {
                               Navigator.of(context).pushNamedAndRemoveUntil(
-                                '/login', 
+                                '/login',
                                 (route) => false,
                               );
                             }
                           }
                         },
                         child: const Text("Log Out"),
+                      ),
+
+                      const SizedBox(height: 10), // <-- consistent spacing
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () async {
+                          final reason = await showDialog<String>(
+                            context: context,
+                            builder: (context) {
+                              String? selectedReason;
+                              return AlertDialog(
+                                title: const Text(
+                                  "Why are you deleting your account?",
+                                ),
+                                content: StatefulBuilder(
+                                  builder: (context, setState) {
+                                    return Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        RadioListTile<String>(
+                                          title: const Text("Privacy concerns"),
+                                          value: "Privacy concerns",
+                                          groupValue: selectedReason,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              selectedReason = value;
+                                            });
+                                          },
+                                        ),
+                                        RadioListTile<String>(
+                                          title: const Text(
+                                            "Too many notifications",
+                                          ),
+                                          value: "Too many notifications",
+                                          groupValue: selectedReason,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              selectedReason = value;
+                                            });
+                                          },
+                                        ),
+                                        RadioListTile<String>(
+                                          title: const Text(
+                                            "Not User Friendly",
+                                          ),
+                                          value: "Not User Friendly",
+                                          groupValue: selectedReason,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              selectedReason = value;
+                                            });
+                                          },
+                                        ),
+                                        RadioListTile<String>(
+                                          title: const Text(
+                                            "I found a better app",
+                                          ),
+                                          value: "I found a better app",
+                                          groupValue: selectedReason,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              selectedReason = value;
+                                            });
+                                          },
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text("CANCEL"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      if (selectedReason != null) {
+                                        Navigator.pop(context, selectedReason);
+                                      }
+                                    },
+                                    child: const Text("CONTINUE"),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+
+                          if (reason != null) {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder:
+                                  (context) => AlertDialog(
+                                    title: const Text("Confirm Deletion"),
+                                    content: const Text(
+                                      "Are you sure you want to delete your account?\nThis action cannot be undone.",
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.pop(context, false),
+                                        child: const Text("No, I love JAMBU"),
+                                      ),
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.pop(context, true),
+                                        child: const Text(
+                                          "Yes, I don't like JAMBU",
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                            );
+
+                            if (confirm == true) {
+                              try {
+                                final user = FirebaseAuth.instance.currentUser;
+                                final uid = user?.uid;
+
+                                if (uid != null) {
+                                  // Fetch organiser data from Firestore
+                                  final docSnapshot =
+                                      await FirebaseFirestore.instance
+                                          .collection('organisers')
+                                          .doc(uid)
+                                          .get();
+
+                                  final organiserData =
+                                      docSnapshot.data() ?? {};
+
+                                  // Save to deleted_accounts collection
+                                  await FirebaseFirestore.instance
+                                    .collection('deleted_accounts')
+                                    .doc(user?.uid)
+                                    .set({
+                                  'email': user?.email ?? '',
+                                  'organizationName': organiserData['organizationName'] ?? '',
+                                  'phoneNumber': organiserData['phoneNumber'] ?? '',
+                                  'picName': organiserData['picName'] ?? '',
+                                  'reason': selectedReason ?? '',
+                                  'status': 'deleted',
+                                });
+                                  // Delete the account
+                                  await user?.delete();
+
+                                  // Navigate to login page
+                                  if (context.mounted) {
+                                    Navigator.of(
+                                      context,
+                                    ).pushNamedAndRemoveUntil(
+                                      '/login',
+                                      (r) => false,
+                                    );
+                                  }
+                                }
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Error deleting account: $e"),
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        },
+
+                        child: const Text("Delete Account"),
                       ),
                     ],
                   ),
