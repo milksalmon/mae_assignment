@@ -182,7 +182,7 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
                                     TextButton(
                                       onPressed:
                                           () => Navigator.pop(context, false),
-                                      child: const Text("BACK"),
+                                      child: const Text("CANCEL"),
                                     ),
                                     TextButton(
                                       onPressed:
