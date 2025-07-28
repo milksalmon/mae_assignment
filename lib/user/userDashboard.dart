@@ -460,9 +460,7 @@ class _HomeTabState extends State<_HomeTab> {
   void _openSearchPage() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => SearchPage(
-          allEvents: _allEvents,
-        ),
+        builder: (context) => SearchPage(allEvents: _allEvents),
       ),
     );
   }

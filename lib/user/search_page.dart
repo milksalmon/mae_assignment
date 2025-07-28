@@ -15,13 +15,21 @@ class _SearchPageState extends State<SearchPage> {
   String _searchQuery = '';
   // String _location = ''; // Removed unused variable
 
-  List<Map<String, String>> get _filteredEvents {
-    if (_searchQuery.isEmpty) return widget.allEvents;
+  List<Map<String, String>> _getFilteredEvents() {
+    final query = _searchQuery.toLowerCase();
+    final location = _locationController.text.toLowerCase();
+
+    //if (_searchQuery.isEmpty) return widget.allEvents;
     return widget.allEvents.where((event) {
-      final query = _searchQuery.toLowerCase();
-      return event['title']!.toLowerCase().contains(query) ||
+      final matchQuery =
+          event['title']!.toLowerCase().contains(query) ||
           event['organiser']!.toLowerCase().contains(query) ||
           event['tags']!.toLowerCase().contains(query);
+      final matchLocation =
+          location.isEmpty ||
+          event['location']!.toLowerCase().contains(location);
+
+      return matchQuery && matchLocation;
     }).toList();
   }
 
@@ -53,6 +61,10 @@ class _SearchPageState extends State<SearchPage> {
             suffixIcon: IconButton(
               icon: Icon(Icons.filter_alt_outlined, color: Colors.black),
               onPressed: () {
+                FocusScope.of(context).unfocus(); // TO HIDE KEYBOARD
+                setState(() {
+                  // RE-TRIGGERED FILTERED RESULTS
+                });
               },
             ),
           ),
@@ -87,25 +99,26 @@ class _SearchPageState extends State<SearchPage> {
             ),
             SizedBox(height: 16),
             Expanded(
-              child: _filteredEvents.isEmpty
-                  ? Center(child: Text('No events found.'))
-                  : ListView.builder(
-                      itemCount: _filteredEvents.length,
-                      itemBuilder: (context, index) {
-                        final event = _filteredEvents[index];
-                        return ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.pinkAccent,
-                            child: Icon(Icons.event, color: Colors.white),
-                          ),
-                          title: Text(event['title'] ?? ''),
-                          subtitle: Text(event['organiser'] ?? ''),
-                          onTap: () {
-                            // Optionally navigate to event details
-                          },
-                        );
-                      },
-                    ),
+              child:
+                  _getFilteredEvents().isEmpty
+                      ? Center(child: Text('No events found.'))
+                      : ListView.builder(
+                        itemCount: _getFilteredEvents().length,
+                        itemBuilder: (context, index) {
+                          final event = _getFilteredEvents()[index];
+                          return ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: Colors.pinkAccent,
+                              child: Icon(Icons.event, color: Colors.white),
+                            ),
+                            title: Text(event['title'] ?? ''),
+                            subtitle: Text(event['organiser'] ?? ''),
+                            onTap: () {
+                              // Optionally navigate to event details
+                            },
+                          );
+                        },
+                      ),
             ),
           ],
         ),

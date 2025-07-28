@@ -4,14 +4,17 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
-import 'package:mae_assignment/user/userDashboard.dart';
-
 class UploadEventForm extends StatefulWidget {
   @override
   _UploadEventFormState createState() => _UploadEventFormState();
 }
 
+LatLng _selectedLocation = LatLng(3.1390, 101.6869); // Kuala Lumpur
+Set<Marker> _markers = {};
+
 class _UploadEventFormState extends State<UploadEventForm> {
+  bool _mapTouched = false;
+  late GoogleMapController _mapController;
   final _formKey = GlobalKey<FormState>();
   XFile? _coverImage;
   DateTime? _startDate;
@@ -81,6 +84,15 @@ class _UploadEventFormState extends State<UploadEventForm> {
     }
   }
 
+  void _onMapTap(LatLng position) {
+    setState(() {
+      _selectedLocation = position;
+      _markers = {
+        Marker(markerId: MarkerId("selected-location"), position: position),
+      };
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,7 +127,7 @@ class _UploadEventFormState extends State<UploadEventForm> {
               ),
               TextFormField(
                 controller: _hashtagsController,
-                decoration: InputDecoration(labelText: "Hashtags"),
+                decoration: InputDecoration(labelText: "Tags"),
                 validator: (value) => value!.isEmpty ? "Required" : null,
               ),
               Row(
@@ -126,7 +138,7 @@ class _UploadEventFormState extends State<UploadEventForm> {
                       child: Text(
                         _startDate == null
                             ? "Pick Start Date"
-                            : "Start: ${_startDate!.toLocal()}".split(' ')[0],
+                            : "Start: ${_startDate!.toLocal().toString().split(' ')[0]}",
                       ),
                     ),
                   ),
@@ -137,7 +149,7 @@ class _UploadEventFormState extends State<UploadEventForm> {
                       child: Text(
                         _endDate == null
                             ? "Pick End Date"
-                            : "End: ${_endDate!.toLocal()}".split(' ')[0],
+                            : "End: ${_endDate!.toLocal().toString().split(' ')[0]}",
                       ),
                     ),
                   ),
@@ -174,15 +186,101 @@ class _UploadEventFormState extends State<UploadEventForm> {
                 decoration: InputDecoration(labelText: "Event Description"),
                 validator: (value) => value!.isEmpty ? "Required" : null,
               ),
+              //AIzaSyB30HgRfK2vOxqIffJO-SBMH5K6diEg7LM - gmaps api key
               SizedBox(height: 16),
-              Text("Location (Google Maps placeholder)"),
-              Container(
+              Text("Location"),
+              SizedBox(
                 height: 200,
-                color: Colors.grey[300],
-                child: Center(
-                  child: Text("Map goes here"),
-                ), // Replace with real map
+                child: Stack(
+                  children: [
+                    GoogleMap(
+                      initialCameraPosition: CameraPosition(
+                        target: _selectedLocation ?? LatLng(3.1390, 101.6869),
+                        zoom: 14.0,
+                      ),
+                      markers: _markers,
+                      onTap: (LatLng tappedPoint) {
+                        setState(() {
+                          _selectedLocation = tappedPoint;
+                          _markers = {
+                            Marker(
+                              markerId: MarkerId("selected-location"),
+                              position: tappedPoint,
+                            ),
+                          };
+                        });
+                      },
+                      onMapCreated: (GoogleMapController controller) {
+                        _mapController = controller;
+                        setState(() {
+                          _markers = {
+                            Marker(
+                              markerId: MarkerId("selected-location"),
+                              position:
+                                  _selectedLocation ?? LatLng(3.1390, 101.6869),
+                            ),
+                          };
+                        });
+                      },
+                      myLocationEnabled: true,
+                      zoomControlsEnabled: false,
+                      zoomGesturesEnabled: true,
+                      scrollGesturesEnabled: true,
+                      rotateGesturesEnabled: true,
+                      tiltGesturesEnabled: true,
+                    ),
+                    Positioned(
+                      right: 10,
+                      top: 10,
+                      child: Column(
+                        children: [
+                          FloatingActionButton(
+                            heroTag: "zoomIn",
+                            mini: true,
+                            onPressed: () async {
+                              final zoomLevel =
+                                  await _mapController.getZoomLevel();
+                              _mapController.animateCamera(
+                                CameraUpdate.zoomTo(zoomLevel + 1),
+                              );
+                            },
+                            child: Icon(Icons.zoom_in),
+                          ),
+                          SizedBox(height: 8),
+                          FloatingActionButton(
+                            heroTag: "zoomOut",
+                            mini: true,
+                            onPressed: () async {
+                              final zoomLevel =
+                                  await _mapController.getZoomLevel();
+                              _mapController.animateCamera(
+                                CameraUpdate.zoomTo(zoomLevel - 1),
+                              );
+                            },
+                            child: Icon(Icons.zoom_out),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              SizedBox(height: 10),
+              Text(
+                "Lat: ${_selectedLocation?.latitude}, Lng: ${_selectedLocation?.longitude}",
+                style: TextStyle(fontSize: 14),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  // TODO: Save to Firebase
+                  print("Saved location: $_selectedLocation");
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Location saved!')));
+                },
+                child: Text("Save Location"),
+              ),
+
               SizedBox(height: 16),
               SwitchListTile(
                 title: Text("Parking Available"),

@@ -10,6 +10,10 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:requestLegacyExternalStorage="true">
+        <!-- The API key for Google Maps, accept when merging -->
+        <meta-data
+          android:name="com.google.android.geo.API_KEY"
+          android:value = "AIzaSyB30HgRfK2vOxqIffJO-SBMH5K6diEg7LM" />
 
         <activity
             android:name=".MainActivity"
