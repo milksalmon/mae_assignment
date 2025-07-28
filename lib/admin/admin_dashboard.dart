@@ -35,12 +35,33 @@ class _AdminDashboard extends State<AdminDashboard> {
             icon: Icon(Icons.logout),
             tooltip: 'Logout',
             onPressed: () async {
-              // PROPERLY LOGOUT
-              await FirebaseAuth.instance.signOut();
-              if (context.mounted) {
-                Navigator.pushReplacementNamed(context, '/login');
+              bool? confirmLogout = await showDialog<bool>(
+                context: context,
+                builder:
+                    (context) => AlertDialog(
+                      title: const Text('Confirm Logout'),
+                      content: const Text('Logout from your account ?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('CANCEL'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('LOGOUT'),
+                        ),
+                      ],
+                    ),
+              );
+
+              if (confirmLogout == true) {
+                // PROPERLY LOGOUT
+                await FirebaseAuth.instance.signOut();
+                if (context.mounted) {
+                  Navigator.pushReplacementNamed(context, '/login');
+                }
+                // PUSH REPLACEMENT NAMED = DONT ALLOW USER TO GO BACK TO PREVIOUS SCREEN
               }
-              // PUSH REPLACEMENT NAMED = DONT ALLOW USER TO GO BACK TO PREVIOUS SCREEN
             },
           ),
         ],
