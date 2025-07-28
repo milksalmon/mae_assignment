@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
@@ -189,80 +190,53 @@ class _UploadEventFormState extends State<UploadEventForm> {
               //AIzaSyB30HgRfK2vOxqIffJO-SBMH5K6diEg7LM - gmaps api key
               SizedBox(height: 16),
               Text("Location"),
-              SizedBox(
-                height: 200,
-                child: Stack(
-                  children: [
-                    GoogleMap(
-                      initialCameraPosition: CameraPosition(
-                        target: _selectedLocation ?? LatLng(3.1390, 101.6869),
-                        zoom: 14.0,
-                      ),
-                      markers: _markers,
-                      onTap: (LatLng tappedPoint) {
-                        setState(() {
-                          _selectedLocation = tappedPoint;
-                          _markers = {
-                            Marker(
-                              markerId: MarkerId("selected-location"),
-                              position: tappedPoint,
-                            ),
-                          };
-                        });
-                      },
-                      onMapCreated: (GoogleMapController controller) {
-                        _mapController = controller;
-                        setState(() {
-                          _markers = {
-                            Marker(
-                              markerId: MarkerId("selected-location"),
-                              position:
-                                  _selectedLocation ?? LatLng(3.1390, 101.6869),
-                            ),
-                          };
-                        });
-                      },
-                      myLocationEnabled: true,
-                      zoomControlsEnabled: false,
-                      zoomGesturesEnabled: true,
-                      scrollGesturesEnabled: true,
-                      rotateGesturesEnabled: true,
-                      tiltGesturesEnabled: true,
+              GestureDetector(
+                onVerticalDragDown: (_) {},
+                child: SizedBox(
+                  height: 200,
+                  child: GoogleMap(
+                    initialCameraPosition: CameraPosition(
+                      target: _selectedLocation ?? LatLng(3.1390, 101.6869),
+                      zoom: 14.0,
                     ),
-                    Positioned(
-                      right: 10,
-                      top: 10,
-                      child: Column(
-                        children: [
-                          FloatingActionButton(
-                            heroTag: "zoomIn",
-                            mini: true,
-                            onPressed: () async {
-                              final zoomLevel =
-                                  await _mapController.getZoomLevel();
-                              _mapController.animateCamera(
-                                CameraUpdate.zoomTo(zoomLevel + 1),
-                              );
-                            },
-                            child: Icon(Icons.zoom_in),
+                    markers: _markers,
+                    onTap: (LatLng tappedPoint) {
+                      setState(() {
+                        _selectedLocation = tappedPoint;
+                        _markers = {
+                          Marker(
+                            markerId: MarkerId("selected-location"),
+                            position: tappedPoint,
                           ),
-                          SizedBox(height: 8),
-                          FloatingActionButton(
-                            heroTag: "zoomOut",
-                            mini: true,
-                            onPressed: () async {
-                              final zoomLevel =
-                                  await _mapController.getZoomLevel();
-                              _mapController.animateCamera(
-                                CameraUpdate.zoomTo(zoomLevel - 1),
-                              );
-                            },
-                            child: Icon(Icons.zoom_out),
+                        };
+                      });
+                    },
+                    onMapCreated: (GoogleMapController controller) {
+                      setState(() {
+                        _markers = {
+                          Marker(
+                            markerId: MarkerId("selected-location"),
+                            position:
+                                _selectedLocation ?? LatLng(3.1390, 101.6869),
                           ),
-                        ],
+                        };
+                      });
+                    }, //accept when merging
+                    zoomControlsEnabled: true,
+                    zoomGesturesEnabled: true,
+                    scrollGesturesEnabled: true,
+                    rotateGesturesEnabled: true,
+                    tiltGesturesEnabled: true,
+                    myLocationEnabled: true,
+                    myLocationButtonEnabled: true,
+                    compassEnabled: true,
+                    gestureRecognizers: {
+                      Factory<OneSequenceGestureRecognizer>(
+                        //accept when merging
+                        () => EagerGestureRecognizer(),
                       ),
-                    ),
-                  ],
+                    },
+                  ),
                 ),
               ),
               SizedBox(height: 10),
