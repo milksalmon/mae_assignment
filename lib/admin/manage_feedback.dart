@@ -175,15 +175,28 @@ class _ManageFeedback extends State<ManageFeedback> {
           // ONLY SHOW FEEDBACKS THAT IS "SAFE"
           if ((feedbackData['status'] ?? '').toString().toLowerCase() ==
               'safe') {
+            final userId = feedbackData['userId'];
+            String? profileImageUrl;
+
+            if (userId != null) {
+              final userDoc =
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(userId)
+                      .get();
+              if (userDoc.exists) {
+                profileImageUrl = userDoc.data()?['profileImageUrl'];
+              }
+            }
             allFeedback.add({
-              'id': feedbackDoc.id, // AUTO ID
+              'id': feedbackDoc.id,
               'eventId': eventId,
               'name': feedbackData['name'] ?? '',
               'comment': feedbackData['comment'] ?? '',
               'rating': feedbackData['rating'] ?? '',
               'eventName': eventName,
               'timestamp': feedbackData['timestamp'],
-              //'vendor': vendorName,
+              'profileImageUrl': profileImageUrl,
             });
           }
         }
@@ -324,9 +337,15 @@ class _ManageFeedback extends State<ManageFeedback> {
                                           children: [
                                             Row(
                                               children: [
-                                                const CircleAvatar(
-                                                  child: Icon(Icons.person),
-                                                ),
+                                                item['profileImageUrl'] != null
+                                                    ? CircleAvatar(
+                                                      backgroundImage: NetworkImage(
+                                                        item['profileImageUrl'],
+                                                      ),
+                                                    )
+                                                    : const CircleAvatar(
+                                                      child: Icon(Icons.person),
+                                                    ),
                                                 const SizedBox(width: 10),
                                                 Expanded(
                                                   child: Column(
@@ -410,24 +429,24 @@ class _ManageFeedback extends State<ManageFeedback> {
                                               ],
                                             ),
                                             const SizedBox(height: 8),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.spaceEvenly,
-                                              children: [
-                                                TextButton(
-                                                  onPressed: () {},
-                                                  child: const Text('Reply'),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () {},
-                                                  child: const Text('Message'),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () {},
-                                                  child: const Text('Send'),
-                                                ),
-                                              ],
-                                            ),
+                                            // Row(
+                                            //   mainAxisAlignment:
+                                            //       MainAxisAlignment.spaceEvenly,
+                                            //   children: [
+                                            //     TextButton(
+                                            //       onPressed: () {},
+                                            //       child: const Text('Reply'),
+                                            //     ),
+                                            //     TextButton(
+                                            //       onPressed: () {},
+                                            //       child: const Text('Message'),
+                                            //     ),
+                                            //     TextButton(
+                                            //       onPressed: () {},
+                                            //       child: const Text('Send'),
+                                            //     ),
+                                            //   ],
+                                            // ),
                                           ],
                                         ),
                                       ),

@@ -9,7 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:intl/intl.dart';
 
-class EventPage extends StatelessWidget {
+class EventPage extends StatefulWidget {
   final String eventId;
   final String imageUrl;
   final String title;
@@ -22,6 +22,7 @@ class EventPage extends StatelessWidget {
   final String description;
   final String wsLink;
   final String parking;
+  final DateTime? endDate;
 
   const EventPage({
     Key? key,
@@ -37,11 +38,84 @@ class EventPage extends StatelessWidget {
     required this.description,
     required this.wsLink,
     required this.parking,
+    required this.endDate,
   }) : super(key: key);
 
   @override
+  State<EventPage> createState() => _EventPageState();
+}
+
+class _EventPageState extends State<EventPage> {
+  final TextEditingController _feedbackController = TextEditingController();
+  String _selectedRating = '5 Ratings';
+  String _selectedDisplayRating = '5 Ratings';
+
+  @override
+  void dispose() {
+    _feedbackController.dispose();
+    super.dispose();
+  }
+
+  // FOR STAR CONVERSION HELPER
+  int _extractStarCount(String? ratingText) {
+    if (ratingText == null) return 0;
+
+    final match = RegExp(r'\d+').firstMatch(ratingText);
+    if (match != null) {
+      return int.tryParse(match.group(0) ?? '') ?? 0;
+    }
+    return 0;
+  }
+
+  Future<void> _submitFeedback(BuildContext context) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You must be logged in to submit feedback.'),
+        ),
+      );
+      return;
+    }
+    final feedbackText = _feedbackController.text.trim();
+    if (feedbackText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter some feedback')),
+      );
+      return;
+    }
+
+    final feedbackData = {
+      'userId': user.uid,
+      'name': user.displayName ?? 'Anonymous',
+      'comment': feedbackText,
+      'rating': _selectedRating,
+      'status': 'Safe',
+      'timestamp': Timestamp.now(),
+    };
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('event')
+          .doc(widget.eventId)
+          .collection('feedback')
+          .add(feedbackData);
+
+      _feedbackController.clear();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Feedback submitted successfully !')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error submitting feedback: $e')));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final tagList = tags.split(',').map((tag) => tag.trim()).toList();
+    final tagList = widget.tags.split(',').map((tag) => tag.trim()).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -81,7 +155,7 @@ class EventPage extends StatelessWidget {
             const SizedBox(height: 20),
 
             // DISPLAYING PARKING
-            Text('Parking: $parking'),
+            Text('Parking: $widget.parking'),
             const SizedBox(height: 20),
             // Location
             _buildLocationSection(),
@@ -109,9 +183,9 @@ class EventPage extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child:
-              imageUrl.isNotEmpty
+              widget.imageUrl.isNotEmpty
                   ? Image.network(
-                    imageUrl,
+                    widget.imageUrl,
                     height: 200,
                     width: double.infinity,
                     fit: BoxFit.cover,
@@ -123,7 +197,7 @@ class EventPage extends StatelessWidget {
                     child: const Center(child: Icon(Icons.image, size: 50)),
                   ),
         ),
-        if (media.length > 1)
+        if (widget.media.length > 1)
           Positioned(
             bottom: 8,
             right: 8,
@@ -134,7 +208,7 @@ class EventPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                '+${media.length - 1}',
+                '+${widget.media.length - 1}',
                 style: const TextStyle(color: Colors.white, fontSize: 12),
               ),
             ),
@@ -148,7 +222,7 @@ class EventPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          title.toUpperCase(),
+          widget.title.toUpperCase(),
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -203,7 +277,7 @@ class EventPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                organiser,
+                widget.organiser,
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
               const Text(
@@ -232,56 +306,79 @@ class EventPage extends StatelessWidget {
 
   Widget _buildDateTimeSection() {
     // TO MATCH THE LOGIC OF THE TIME OF EVENT EITHER ON-GOING OR NOT
-    DateTime? parsedDate;
+    String eventStatus = 'Unknown';
+    final now = DateTime.now();
+    DateTime? parsedStartDate;
     try {
-      parsedDate = DateFormat('yyyy-M-dd HH:mm').parse(date);
+      parsedStartDate = DateFormat('yyyy-M-dd HH:m').parse(widget.date);
     } catch (e) {
-      parsedDate = null;
+      parsedStartDate = null;
     }
 
-    String eventStatus;
-    if (parsedDate != null) {
-      eventStatus =
-          parsedDate.isAfter(DateTime.now()) ? 'Coming Soon' : 'OnGoing';
-    } else {
-      eventStatus = 'Unknown';
+    if (parsedStartDate != null && widget.endDate != null) {
+      if (now.isBefore(parsedStartDate)) {
+        eventStatus = 'Coming Soon';
+      } else if (now.isAfter(widget.endDate!)) {
+        eventStatus = 'Ended';
+      } else {
+        eventStatus = 'On-Going';
+      }
     }
+    String formattedStart =
+        parsedStartDate != null
+            ? DateFormat('d MMMM yyyy, h:mm a').format(parsedStartDate)
+            : 'N/A';
+    String formattedEnd =
+        widget.endDate != null
+            ? DateFormat('d MMMM yyyy, h:mm a').format(widget.endDate!)
+            : 'N/A';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          children: [
-            const Icon(Icons.access_time, size: 20),
-            const SizedBox(width: 8),
-            const Text(
-              'Date & Time',
-              style: TextStyle(fontWeight: FontWeight.w500),
-            ),
+          children: const [
+            Icon(Icons.access_time, size: 20),
+            SizedBox(width: 8),
+            Text('Date & Time', style: TextStyle(fontWeight: FontWeight.w500)),
           ],
         ),
         const SizedBox(height: 8),
+
         Row(
           children: [
-            Text(date, style: const TextStyle(fontSize: 14)),
-            const SizedBox(width: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                // color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[200]!),
-              ),
-              child: Text(eventStatus, style: const TextStyle(fontSize: 12)),
+            const Text(
+              'Start: ',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
+            Text(formattedStart),
           ],
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            const Text('End: ', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(formattedEnd),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(eventStatus, style: const TextStyle(fontSize: 12)),
         ),
       ],
     );
   }
 
   Widget _buildLocationSection() {
-    final LatLng latLng = LatLng(geoPoint.latitude, geoPoint.longitude);
+    final LatLng latLng = LatLng(
+      widget.geoPoint.latitude,
+      widget.geoPoint.longitude,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,7 +406,7 @@ class EventPage extends StatelessWidget {
                 Marker(
                   markerId: const MarkerId("event_location"),
                   position: latLng,
-                  infoWindow: InfoWindow(title: locationName),
+                  infoWindow: InfoWindow(title: widget.locationName),
                 ),
               },
               zoomControlsEnabled: false,
@@ -361,7 +458,7 @@ class EventPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (media.isNotEmpty) ...[
+        if (widget.media.isNotEmpty) ...[
           const SizedBox(height: 20),
           const Text(
             'More Media:',
@@ -372,7 +469,7 @@ class EventPage extends StatelessWidget {
             height: 100,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: media.length,
+              itemCount: widget.media.length,
               itemBuilder: (context, index) {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8.0),
@@ -387,7 +484,7 @@ class EventPage extends StatelessWidget {
                                 minScale: 0.5,
                                 maxScale: 4,
                                 child: Image.network(
-                                  media[index],
+                                  widget.media[index],
                                   fit: BoxFit.contain,
                                 ),
                               ),
@@ -397,7 +494,7 @@ class EventPage extends StatelessWidget {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Image.network(
-                        media[index],
+                        widget.media[index],
                         width: 120,
                         height: 100,
                         fit: BoxFit.cover,
@@ -409,12 +506,13 @@ class EventPage extends StatelessWidget {
             ),
           ),
         ],
+        const SizedBox(height: 10),
         const Text(
           'Description',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        Text(description),
+        Text(widget.description),
         const SizedBox(height: 16),
         // Sample bullet points
         // const Column(
@@ -484,64 +582,201 @@ class EventPage extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        // Ratings bar
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.pink,
-            borderRadius: BorderRadius.circular(8),
+        // FEEDBACK INPUT START
+        TextField(
+          controller: _feedbackController,
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: 'Write your feedback...',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
+        ),
+        const SizedBox(height: 12),
+
+        // RATING DROPDOWN
+        DropdownButtonFormField<String>(
+          value: _selectedRating,
+          items:
+              [
+                '1 Ratings',
+                '2 Ratings',
+                '3 Ratings',
+                '4 Ratings',
                 '5 Ratings',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Icon(Icons.keyboard_arrow_down, color: Colors.white),
-            ],
+              ].map((rating) {
+                return DropdownMenuItem<String>(
+                  value: rating,
+                  child: Text(rating),
+                );
+              }).toList(),
+          onChanged: (value) {
+            _selectedRating = value!;
+          },
+          decoration: InputDecoration(
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
           ),
+        ),
+        const SizedBox(height: 12),
+
+        // SUBMIT BUTTON
+        ElevatedButton(
+          onPressed: () async => await _submitFeedback(context),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.pink,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          ),
+          child: const Text('Submit Feedback'),
+        ),
+        const SizedBox(height: 20),
+        // Ratings bar
+        DropdownButtonFormField<String>(
+          value: _selectedDisplayRating,
+          items:
+              [
+                '1 Ratings',
+                '2 Ratings',
+                '3 Ratings',
+                '4 Ratings',
+                '5 Ratings',
+              ].map((rating) {
+                return DropdownMenuItem<String>(
+                  value: rating,
+                  child: Text(
+                    rating,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                );
+              }).toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedDisplayRating = value!;
+            });
+          },
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.pink,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
+            ),
+          ),
+          dropdownColor: Colors.pink,
+          iconEnabledColor: Colors.white,
+          style: const TextStyle(color: Colors.white),
         ),
         const SizedBox(height: 16),
 
         // Feedback items
-        ...List.generate(3, (index) => _buildFeedbackItem()),
+        StreamBuilder(
+          stream:
+              FirebaseFirestore.instance
+                  .collection('event')
+                  .doc(widget.eventId)
+                  .collection('feedback')
+                  .where('status', isEqualTo: 'Safe')
+                  .where('rating', isEqualTo: _selectedDisplayRating)
+                  //.orderBy('timestamp', descending: true)
+                  .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return const Text('No feedback yet.');
+            }
+
+            final docs = snapshot.data!.docs;
+            // print('Loaded feedback count: ${docs.length}');
+            // print('Event ID used: ${widget.eventId}');
+
+            return Column(
+              children:
+                  snapshot.data!.docs.map((doc) {
+                    final Map<String, dynamic> data =
+                        doc.data() as Map<String, dynamic>;
+                    return _buildFeedbackItem(data);
+                  }).toList(),
+            );
+          },
+        ),
       ],
     );
   }
 
-  Widget _buildFeedbackItem() {
+  Widget _buildFeedbackItem(Map<String, dynamic> data) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.person, color: Colors.grey),
+          FutureBuilder<DocumentSnapshot>(
+            future:
+                FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(data['userId'])
+                    .get(),
+
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const CircleAvatar(
+                  backgroundColor: Colors.grey,
+                  child: Icon(Icons.person, color: Colors.white),
+                );
+              }
+
+              if (snapshot.hasData && snapshot.data!.exists) {
+                final userData = snapshot.data!.data() as Map<String, dynamic>;
+                final imageUrl = userData['profileImageUrl'];
+                if (imageUrl != null && imageUrl.isNotEmpty) {
+                  return CircleAvatar(backgroundImage: NetworkImage(imageUrl));
+                }
+              }
+              return const CircleAvatar(
+                backgroundColor: Colors.grey,
+                child: Icon(Icons.person, color: Colors.white),
+              );
+            },
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Mr Kun',
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                Text(
+                  data['name'] ?? 'Anonymous',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(data['comment'] ?? ''),
+                const SizedBox(height: 4),
+                Row(
+                  children: List.generate(
+                    _extractStarCount(data['rating']),
+                    (index) =>
+                        const Icon(Icons.star, size: 16, color: Colors.orange),
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  DateFormat(
+                    'd MMM yyyy h:mm a',
+                  ).format((data['timestamp'] as Timestamp).toDate()),
+                  style: const TextStyle(fontSize: 10, color: Colors.grey),
                 ),
               ],
             ),
@@ -562,7 +797,7 @@ class EventPage extends StatelessWidget {
             ),
             actions: [
               TextButton(
-                onPressed: () => launchUrl(Uri.parse(wsLink)),
+                onPressed: () => launchUrl(Uri.parse(widget.wsLink)),
                 child: const Text('Join Chat'),
               ),
               TextButton(
