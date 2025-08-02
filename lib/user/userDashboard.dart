@@ -54,9 +54,10 @@ Future<String> getCityFromGeoPoint(GeoPoint geoPoint) async {
   );
 
   if (placemarks.isNotEmpty) {
-    String city = placemarks[0].locality ?? placemarks[0].subLocality ?? 'Unknown';
+    String city =
+        placemarks[0].locality ?? placemarks[0].subLocality ?? 'Unknown';
     String state = placemarks[0].administrativeArea ?? '';
-    
+
     if (city != 'Unknown' && state.isNotEmpty) {
       return '$city, $state';
     } else if (city != 'Unknown') {
@@ -640,6 +641,7 @@ class _HomeTabState extends State<_HomeTab> {
     'Johor',
     'Kedah',
     'Kelantan',
+    'Kuala Lumpur',
     'Malacca',
     'Negeri Sembilan',
     'Pahang',
@@ -777,19 +779,23 @@ class _HomeTabState extends State<_HomeTab> {
 
   List<Map<String, dynamic>> get _filteredEvents {
     final query = _searchQuery.toLowerCase();
-    
+
     // Filter by search query and selected state
     return _allEvents.where((event) {
       // Text search filter
-      bool matchesSearch = query.isEmpty ||
+      bool matchesSearch =
+          query.isEmpty ||
           event['title'].toLowerCase().contains(query) ||
           event['organiser'].toLowerCase().contains(query) ||
           event['tags'].toLowerCase().contains(query);
-      
+
       // State filter
-      bool matchesState = _selectedState == 'All States' ||
-          event['location'].toLowerCase().contains(_selectedState.toLowerCase());
-      
+      bool matchesState =
+          _selectedState == 'All States' ||
+          event['location'].toLowerCase().contains(
+            _selectedState.toLowerCase(),
+          );
+
       return matchesSearch && matchesState;
     }).toList();
   }
@@ -833,15 +839,23 @@ class _HomeTabState extends State<_HomeTab> {
                   borderRadius: BorderRadius.circular(24.0),
                 ),
                 child: IconButton(
-                  icon: Icon(_selectedState == 'All States' ? Icons.filter_list : Icons.close),
-                  onPressed: _selectedState == 'All States' 
-                      ? _showStateFilterDialog
-                      : () {
-                          setState(() {
-                            _selectedState = 'All States';
-                          });
-                        },
-                  tooltip: _selectedState == 'All States' ? 'Filter by State' : 'Clear Filter',
+                  icon: Icon(
+                    _selectedState == 'All States'
+                        ? Icons.filter_list
+                        : Icons.close,
+                  ),
+                  onPressed:
+                      _selectedState == 'All States'
+                          ? _showStateFilterDialog
+                          : () {
+                            setState(() {
+                              _selectedState = 'All States';
+                            });
+                          },
+                  tooltip:
+                      _selectedState == 'All States'
+                          ? 'Filter by State'
+                          : 'Clear Filter',
                 ),
               ),
             ],
