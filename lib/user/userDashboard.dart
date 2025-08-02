@@ -54,7 +54,16 @@ Future<String> getCityFromGeoPoint(GeoPoint geoPoint) async {
   );
 
   if (placemarks.isNotEmpty) {
-    return placemarks[0].locality ?? 'Unknown';
+    String city = placemarks[0].locality ?? placemarks[0].subLocality ?? 'Unknown';
+    String state = placemarks[0].administrativeArea ?? '';
+    
+    if (city != 'Unknown' && state.isNotEmpty) {
+      return '$city, $state';
+    } else if (city != 'Unknown') {
+      return city;
+    } else if (state.isNotEmpty) {
+      return state;
+    }
   }
   return 'Unknown';
 }
@@ -620,9 +629,28 @@ class _HomeTab extends StatefulWidget {
 class _HomeTabState extends State<_HomeTab> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String _selectedState = 'All States';
 
   List<Map<String, dynamic>> _allEvents = [];
   bool _isLoading = true;
+
+  // List of Malaysian states
+  final List<String> _malaysianStates = [
+    'All States',
+    'Johor',
+    'Kedah',
+    'Kelantan',
+    'Malacca',
+    'Negeri Sembilan',
+    'Pahang',
+    'Penang',
+    'Perak',
+    'Perlis',
+    'Sabah',
+    'Sarawak',
+    'Selangor',
+    'Terengganu',
+  ];
 
   // LOGIC OF SAVED EVENTS
   Future<void> toggleSaveEvent(String eventId) async {
@@ -649,6 +677,54 @@ class _HomeTabState extends State<_HomeTab> {
   void initState() {
     super.initState();
     _fetchEvents();
+  }
+
+  void _showStateFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Filter by State'),
+          content: SizedBox(
+            width: double.minPositive,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: _malaysianStates.length,
+              itemBuilder: (context, index) {
+                final state = _malaysianStates[index];
+                return ListTile(
+                  title: Text(state),
+                  leading: Radio<String>(
+                    value: state,
+                    groupValue: _selectedState,
+                    onChanged: (String? value) {
+                      setState(() {
+                        _selectedState = value!;
+                      });
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  onTap: () {
+                    setState(() {
+                      _selectedState = state;
+                    });
+                    Navigator.of(context).pop();
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _fetchEvents() async {
@@ -701,11 +777,20 @@ class _HomeTabState extends State<_HomeTab> {
 
   List<Map<String, dynamic>> get _filteredEvents {
     final query = _searchQuery.toLowerCase();
-    if (query.isEmpty) return _allEvents;
+    
+    // Filter by search query and selected state
     return _allEvents.where((event) {
-      return event['title'].toLowerCase().contains(query) ||
+      // Text search filter
+      bool matchesSearch = query.isEmpty ||
+          event['title'].toLowerCase().contains(query) ||
           event['organiser'].toLowerCase().contains(query) ||
           event['tags'].toLowerCase().contains(query);
+      
+      // State filter
+      bool matchesState = _selectedState == 'All States' ||
+          event['location'].toLowerCase().contains(_selectedState.toLowerCase());
+      
+      return matchesSearch && matchesState;
     }).toList();
   }
 
@@ -722,31 +807,57 @@ class _HomeTabState extends State<_HomeTab> {
       child: Column(
         children: [
           // Search bar with filter icon
-          TextField(
-            controller: _searchController,
-            onChanged: (value) {
-              setState(() {
-                _searchQuery = value;
-              });
-            },
-            decoration: InputDecoration(
-              hintText: 'Search events...',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(24.0),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Search events...',
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24.0),
+                    ),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(24.0),
+                ),
+                child: IconButton(
+                  icon: Icon(_selectedState == 'All States' ? Icons.filter_list : Icons.close),
+                  onPressed: _selectedState == 'All States' 
+                      ? _showStateFilterDialog
+                      : () {
+                          setState(() {
+                            _selectedState = 'All States';
+                          });
+                        },
+                  tooltip: _selectedState == 'All States' ? 'Filter by State' : 'Clear Filter',
+                ),
+              ),
+            ],
           ),
+          const SizedBox(height: 8),
+          // Remove the filtered by container since we're using the icon instead
           const SizedBox(height: 16),
           // Location
           Row(
-            children: const [
-              Icon(Icons.location_on_outlined),
-              SizedBox(width: 4),
-              Text('Events in ', style: TextStyle(fontSize: 16)),
+            children: [
+              const Icon(Icons.location_on_outlined),
+              const SizedBox(width: 4),
+              const Text('Events in ', style: TextStyle(fontSize: 16)),
               Text(
-                'Kuala Lumpur',
-                style: TextStyle(
+                _selectedState == 'All States' ? 'Malaysia' : _selectedState,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.green,
@@ -754,7 +865,7 @@ class _HomeTabState extends State<_HomeTab> {
               ),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           // Event list
           Expanded(
             child:
