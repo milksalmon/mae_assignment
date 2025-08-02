@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/theme_provider.dart';
 import 'search_page.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -290,6 +291,8 @@ class _AccountTabState extends State<_AccountTab> {
                 try {
                   await FirebaseAuth.instance.signOut();
                   Provider.of<AppAuthProvider>(context, listen: false).logout();
+                  // Reset theme to light mode on logout
+                  Provider.of<ThemeProvider>(context, listen: false).resetToLightTheme();
                   Navigator.pushReplacementNamed(context, '/login');
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("You are logged out")),
@@ -436,7 +439,16 @@ class _AccountTabState extends State<_AccountTab> {
               ListTile(
                 leading: const Icon(Icons.dark_mode),
                 title: const Text("Dark Mode"),
-                trailing: Switch(value: false, onChanged: (_) {}),
+                trailing: Consumer<ThemeProvider>(
+                  builder: (context, themeProvider, child) {
+                    return Switch(
+                      value: themeProvider.isDarkMode,
+                      onChanged: (value) {
+                        themeProvider.toggleTheme();
+                      },
+                    );
+                  },
+                ),
               ),
               Divider(),
               // Tab Swipe toggle
@@ -580,7 +592,6 @@ class _UserDashboard extends State<UserDashboard> {
     return Scaffold(
       // backgroundColor: Colors.white,
       bottomNavigationBar: NavigationBar(
-        backgroundColor: const Color(0xFFECEFE6),
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,
         indicatorColor: Colors.green,
@@ -980,7 +991,6 @@ class EventCard extends StatelessWidget {
         );
       },
       child: Card(
-        color: const Color(0xFFF9FDF0),
         margin: const EdgeInsets.symmetric(vertical: 8),
         elevation: 3,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1028,7 +1038,7 @@ class EventCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   RichText(
                     text: TextSpan(
-                      style: const TextStyle(color: Colors.black),
+                      style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                       children: [
                         TextSpan(
                           text: title,

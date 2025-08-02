@@ -43,7 +43,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
             const SizedBox(height: 30),
 
-            // ✉️ Email
             TextField(
               controller: emailController,
               keyboardType: TextInputType.emailAddress,
@@ -92,6 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 50,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
+                  
                   backgroundColor: Colors.green,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),

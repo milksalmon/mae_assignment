@@ -118,10 +118,8 @@ class _EventPageState extends State<EventPage> {
     final tagList = widget.tags.split(',').map((tag) => tag.trim()).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Event Page'),
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: Container(
@@ -537,7 +535,7 @@ class _EventPageState extends State<EventPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        // color: Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[200]!),
       ),
