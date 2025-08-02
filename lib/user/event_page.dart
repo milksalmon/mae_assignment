@@ -157,7 +157,7 @@ class _EventPageState extends State<EventPage> {
             const SizedBox(height: 20),
 
             // DISPLAYING PARKING
-            Text('Parking: $widget.parking'),
+            Text('Parking: ${widget.parking}'),
             const SizedBox(height: 20),
             // Location
             _buildLocationSection(),
