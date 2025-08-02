@@ -1,11 +1,3 @@
-// import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:flutter/material.dart';
-// import 'package:provider/provider.dart';
-// import '../providers/auth_provider.dart';
-// import 'package:firebase_storage/firebase_storage.dart';
-
-
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -274,12 +266,12 @@ class EventPage extends StatelessWidget {
           children: tagList.map((tag) => Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.grey[200],
+              color: Colors.pink,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Text(
               tag,
-              style: const TextStyle(fontSize: 12),
+              style: const TextStyle(fontSize: 12, color: Colors.white),
             ),
           )).toList(),
         ),
