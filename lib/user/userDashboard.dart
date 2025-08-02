@@ -8,6 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'event_page.dart';
+import 'package:geocoding/geocoding.dart';
 
 class UserDashboard extends StatefulWidget {
   const UserDashboard({super.key});
@@ -43,6 +44,20 @@ class _AccountTab extends StatefulWidget {
   @override
   State<_AccountTab> createState() => _AccountTabState();
 }
+
+// CONVERT THE GEOLOCATION FROM FIRESTORE DATABASE
+Future<String> getCityFromGeoPoint(GeoPoint geoPoint) async {
+  List<Placemark> placemarks = await placemarkFromCoordinates(
+    geoPoint.latitude,
+    geoPoint.longitude,
+  );
+
+  if (placemarks.isNotEmpty) {
+    return placemarks[0].locality ?? 'Unknown';
+  }
+  return 'Unknown';
+}
+// CONVERT GEOLOCATION END
 
 class _SavedTabState extends State<_SavedTab> {
   @override
@@ -84,6 +99,7 @@ class _SavedTabState extends State<_SavedTab> {
                 (data['media'] as List?)?.map((m) => m.toString()).toList() ??
                 [],
             'description': data['description'] ?? '',
+            'location': data['location'],
           });
         }
       }
@@ -530,29 +546,42 @@ class _HomeTabState extends State<_HomeTab> {
     try {
       final snapshot =
           await FirebaseFirestore.instance.collection('event').get();
-      final events =
-          snapshot.docs.map((doc) {
-            final data = doc.data();
-            return {
-              'eventId': doc.id,
-              'image': data['images'] ?? '',
-              'title': data['eventName'] ?? '',
-              'organiser': data['orgName'] ?? '',
-              'tags': (data['tags'] as List?)?.join(',') ?? '',
-              'date': DateFormat(
-                'yyyy-M-dd HH:mm',
-              ).format(data['startDate']?.toDate().toLocal() ?? DateTime.now()),
-              'media':
-                  (data['media'] as List?)?.map((m) => m.toString()).toList() ??
-                  [],
-              'description': data['description'] ?? '',
-            };
-          }).toList();
+      List<Map<String, dynamic>> events = [];
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        String city = 'Unknown';
+        try {
+          if (data['location'] != null && data['location'] is GeoPoint) {
+            city = await getCityFromGeoPoint(
+              data['location'],
+            ).timeout(Duration(seconds: 3), onTimeout: () => 'Unknown');
+          }
+        } catch (e) {
+          print('Failed to fetch city: $e');
+          city = 'Unknown';
+        }
+
+        events.add({
+          'eventId': doc.id,
+          'image': data['images'] ?? '',
+          'title': data['eventName'] ?? '',
+          'organiser': data['orgName'] ?? '',
+          'tags': (data['tags'] as List?)?.join(',') ?? '',
+          'date': DateFormat(
+            'yyyy-M-dd HH:mm',
+          ).format(data['startDate']?.toDate().toLocal() ?? DateTime.now()),
+          'media':
+              (data['media'] as List?)?.map((m) => m.toString()).toList() ?? [],
+          'description': data['description'] ?? '',
+          'location': city,
+        });
+      }
 
       setState(() {
         _allEvents = events;
         _isLoading = false;
       });
+      print('Finished loading events: ${events.length}');
     } catch (e) {
       print('Error fetching events: $e');
     }
