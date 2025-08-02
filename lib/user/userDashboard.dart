@@ -827,58 +827,31 @@ class _HomeTabState extends State<_HomeTab> {
                   borderRadius: BorderRadius.circular(24.0),
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.filter_list),
-                  onPressed: _showStateFilterDialog,
-                  tooltip: 'Filter by State',
+                  icon: Icon(_selectedState == 'All States' ? Icons.filter_list : Icons.close),
+                  onPressed: _selectedState == 'All States' 
+                      ? _showStateFilterDialog
+                      : () {
+                          setState(() {
+                            _selectedState = 'All States';
+                          });
+                        },
+                  tooltip: _selectedState == 'All States' ? 'Filter by State' : 'Clear Filter',
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          // Selected state indicator
-          if (_selectedState != 'All States')
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.green.shade100,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Filtered by: $_selectedState',
-                    style: TextStyle(
-                      color: Colors.green.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedState = 'All States';
-                      });
-                    },
-                    child: Icon(
-                      Icons.close,
-                      size: 16,
-                      color: Colors.green.shade700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          // Remove the filtered by container since we're using the icon instead
           const SizedBox(height: 16),
           // Location
           Row(
-            children: const [
-              Icon(Icons.location_on_outlined),
-              SizedBox(width: 4),
-              Text('Events in ', style: TextStyle(fontSize: 16)),
+            children: [
+              const Icon(Icons.location_on_outlined),
+              const SizedBox(width: 4),
+              const Text('Events in ', style: TextStyle(fontSize: 16)),
               Text(
-                'Kuala Lumpur',
-                style: TextStyle(
+                _selectedState == 'All States' ? 'Malaysia' : _selectedState,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.green,
@@ -886,7 +859,7 @@ class _HomeTabState extends State<_HomeTab> {
               ),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           // Event list
           Expanded(
             child:
