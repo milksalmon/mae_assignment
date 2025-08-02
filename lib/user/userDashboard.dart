@@ -54,7 +54,16 @@ Future<String> getCityFromGeoPoint(GeoPoint geoPoint) async {
   );
 
   if (placemarks.isNotEmpty) {
-    return placemarks[0].locality ?? 'Unknown';
+    String city = placemarks[0].locality ?? placemarks[0].subLocality ?? 'Unknown';
+    String state = placemarks[0].administrativeArea ?? '';
+    
+    if (city != 'Unknown' && state.isNotEmpty) {
+      return '$city, $state';
+    } else if (city != 'Unknown') {
+      return city;
+    } else if (state.isNotEmpty) {
+      return state;
+    }
   }
   return 'Unknown';
 }
@@ -616,9 +625,28 @@ class _HomeTab extends StatefulWidget {
 class _HomeTabState extends State<_HomeTab> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String _selectedState = 'All States';
 
   List<Map<String, dynamic>> _allEvents = [];
   bool _isLoading = true;
+
+  // List of Malaysian states
+  final List<String> _malaysianStates = [
+    'All States',
+    'Johor',
+    'Kedah',
+    'Kelantan',
+    'Malacca',
+    'Negeri Sembilan',
+    'Pahang',
+    'Penang',
+    'Perak',
+    'Perlis',
+    'Sabah',
+    'Sarawak',
+    'Selangor',
+    'Terengganu',
+  ];
 
   // LOGIC OF SAVED EVENTS
   Future<void> toggleSaveEvent(String eventId) async {
@@ -645,6 +673,54 @@ class _HomeTabState extends State<_HomeTab> {
   void initState() {
     super.initState();
     _fetchEvents();
+  }
+
+  void _showStateFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Filter by State'),
+          content: SizedBox(
+            width: double.minPositive,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: _malaysianStates.length,
+              itemBuilder: (context, index) {
+                final state = _malaysianStates[index];
+                return ListTile(
+                  title: Text(state),
+                  leading: Radio<String>(
+                    value: state,
+                    groupValue: _selectedState,
+                    onChanged: (String? value) {
+                      setState(() {
+                        _selectedState = value!;
+                      });
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  onTap: () {
+                    setState(() {
+                      _selectedState = state;
+                    });
+                    Navigator.of(context).pop();
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _fetchEvents() async {
@@ -695,11 +771,20 @@ class _HomeTabState extends State<_HomeTab> {
 
   List<Map<String, dynamic>> get _filteredEvents {
     final query = _searchQuery.toLowerCase();
-    if (query.isEmpty) return _allEvents;
+    
+    // Filter by search query and selected state
     return _allEvents.where((event) {
-      return event['title'].toLowerCase().contains(query) ||
+      // Text search filter
+      bool matchesSearch = query.isEmpty ||
+          event['title'].toLowerCase().contains(query) ||
           event['organiser'].toLowerCase().contains(query) ||
           event['tags'].toLowerCase().contains(query);
+      
+      // State filter
+      bool matchesState = _selectedState == 'All States' ||
+          event['location'].toLowerCase().contains(_selectedState.toLowerCase());
+      
+      return matchesSearch && matchesState;
     }).toList();
   }
 
@@ -716,21 +801,74 @@ class _HomeTabState extends State<_HomeTab> {
       child: Column(
         children: [
           // Search bar with filter icon
-          TextField(
-            controller: _searchController,
-            onChanged: (value) {
-              setState(() {
-                _searchQuery = value;
-              });
-            },
-            decoration: InputDecoration(
-              hintText: 'Search events...',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(24.0),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Search events...',
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24.0),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(24.0),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.filter_list),
+                  onPressed: _showStateFilterDialog,
+                  tooltip: 'Filter by State',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Selected state indicator
+          if (_selectedState != 'All States')
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.green.shade100,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Filtered by: $_selectedState',
+                    style: TextStyle(
+                      color: Colors.green.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedState = 'All States';
+                      });
+                    },
+                    child: Icon(
+                      Icons.close,
+                      size: 16,
+                      color: Colors.green.shade700,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
           const SizedBox(height: 16),
           // Location
           Row(
