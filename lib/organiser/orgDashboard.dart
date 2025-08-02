@@ -21,7 +21,6 @@ class _OrganiserDashboardState extends State<OrganiserDashboard> {
     setState(() {
       _selectedIndex = index;
     });
- 
   }
 
   @override
@@ -56,7 +55,8 @@ class _OrganiserDashboardState extends State<OrganiserDashboard> {
       Center(child: Text("Notification")),
       OrganiserAccountTab(
         swipeNavigationEnabled: true,
-        onSwipeNavigationChanged: (value) { //accept this for merge
+        onSwipeNavigationChanged: (value) {
+          //accept this for merge
           // Handle swipe state if needed
         },
       ),

@@ -409,14 +409,15 @@ class _UploadEventFormState extends State<UploadEventForm> {
                                   String organiserName = '';
 
                                   if (uid != null) {
-                                    final userDoc =
+                                    final orgDoc =
                                         await FirebaseFirestore.instance
-                                            .collection('users')
+                                            .collection('organisers')
                                             .doc(uid)
                                             .get();
-                                    if (userDoc.exists) {
+                                    if (orgDoc.exists) {
                                       organiserName =
-                                          userDoc.data()?['name'] ?? '';
+                                          orgDoc.data()?['organizationName'] ??
+                                          '';
                                     }
                                   }
 

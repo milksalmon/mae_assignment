@@ -126,6 +126,7 @@ class _SavedTabState extends State<_SavedTab> {
             'geoPoint': data['location'],
             'wsLink': data['wsLink'],
             'parking': data['parking'],
+            'endDate': data['endDate']?.toDate().toLocal(),
           });
         }
       }
@@ -179,6 +180,7 @@ class _SavedTabState extends State<_SavedTab> {
                     geoPoint: event['geoPoint'],
                     wsLink: event['wsLink'],
                     parking: event['parking'],
+                    endDate: event['endDate'],
                     onSaveTap: () {
                       // RE FETCHING ON UNSAVE
                       FirebaseFirestore.instance
@@ -764,6 +766,7 @@ class _HomeTabState extends State<_HomeTab> {
           'geoPoint': data['location'],
           'wsLink': data['wsLink'] ?? '',
           'parking': data['parking'] ?? '',
+          'endDate': data['endDate']?.toDate().toLocal(),
         });
       }
 
@@ -902,6 +905,7 @@ class _HomeTabState extends State<_HomeTab> {
                           geoPoint: event['geoPoint'],
                           wsLink: event['wsLink'],
                           parking: event['parking'],
+                          endDate: event['endDate'],
                           onSaveTap: () => toggleSaveEvent(event['eventId']),
                         );
                       },
@@ -927,6 +931,7 @@ class EventCard extends StatelessWidget {
   final GeoPoint geoPoint;
   final String wsLink;
   final String parking;
+  final DateTime? endDate;
 
   const EventCard({
     required this.imageUrl,
@@ -942,6 +947,7 @@ class EventCard extends StatelessWidget {
     required this.geoPoint,
     required this.wsLink,
     required this.parking,
+    required this.endDate,
     Key? key,
   }) : super(key: key);
 
@@ -968,6 +974,7 @@ class EventCard extends StatelessWidget {
                   geoPoint: geoPoint,
                   wsLink: wsLink,
                   parking: parking,
+                  endDate: endDate,
                 ),
           ),
         );
