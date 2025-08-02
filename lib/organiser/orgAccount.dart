@@ -45,11 +45,7 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         final uid = user.uid;
-        final doc =
-            await FirebaseFirestore.instance
-                .collection('organisers')
-                .doc(uid)
-                .get();
+        final doc = await FirebaseFirestore.instance.collection('organisers').doc(uid).get();
 
         if (doc.exists) {
           final data = doc.data()!;
