@@ -49,11 +49,59 @@ class _EventPageState extends State<EventPage> {
   final TextEditingController _feedbackController = TextEditingController();
   String _selectedRating = '5 Ratings';
   String _selectedDisplayRating = '5 Ratings';
+  bool _hasSubmittedFeedback = false;
 
   @override
   void dispose() {
     _feedbackController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfUserHasSubmitted();
+  }
+
+  // CHECK FOR EXISTING FEEDBACK FROM THE USER
+  Future<void> _checkIfUserHasSubmitted() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final querySnapshot =
+        await FirebaseFirestore.instance
+            .collection('event')
+            .doc(widget.eventId)
+            .collection('feedback')
+            .where('userId', isEqualTo: user.uid)
+            .limit(1)
+            .get();
+
+    setState(() {
+      _hasSubmittedFeedback = querySnapshot.docs.isNotEmpty;
+    });
+  }
+
+  // HELPER METHOD TO MAKE USER COMMENT IF THE EVENT IS NOT "COMING SOON"
+  String _getEventStatus() {
+    final now = DateTime.now();
+    DateTime? parsedStartDate;
+    try {
+      parsedStartDate = DateFormat('yyyy-M-dd HH:m').parse(widget.date);
+    } catch (e) {
+      parsedStartDate = null;
+    }
+
+    if (parsedStartDate != null && widget.endDate != null) {
+      if (now.isBefore(parsedStartDate)) {
+        return 'Coming Soon';
+      } else if (now.isAfter(widget.endDate!)) {
+        return 'Ended';
+      } else {
+        return 'On-Going';
+      }
+    }
+    return 'Unknown';
   }
 
   // FOR STAR CONVERSION HELPER
@@ -106,6 +154,8 @@ class _EventPageState extends State<EventPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Feedback submitted successfully !')),
       );
+
+      await _checkIfUserHasSubmitted();
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -583,56 +633,76 @@ class _EventPageState extends State<EventPage> {
         const SizedBox(height: 16),
 
         // FEEDBACK INPUT START
-        TextField(
-          controller: _feedbackController,
-          maxLines: 3,
-          decoration: InputDecoration(
-            hintText: 'Write your feedback...',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        if (_getEventStatus() == 'Coming Soon') ...[
+          const Text(
+            'Feedback will be available once the event starts.',
+            style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
           ),
-        ),
-        const SizedBox(height: 12),
-
-        // RATING DROPDOWN
-        DropdownButtonFormField<String>(
-          value: _selectedRating,
-          items:
-              [
-                '1 Ratings',
-                '2 Ratings',
-                '3 Ratings',
-                '4 Ratings',
-                '5 Ratings',
-              ].map((rating) {
-                return DropdownMenuItem<String>(
-                  value: rating,
-                  child: Text(rating),
-                );
-              }).toList(),
-          onChanged: (value) {
-            _selectedRating = value!;
-          },
-          decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 10,
+          const SizedBox(height: 20),
+        ] else if (_hasSubmittedFeedback) ...[
+          const Text(
+            'You have already submitted your feedback for this event.',
+            style: TextStyle(color: Colors.green, fontStyle: FontStyle.italic),
+          ),
+          const SizedBox(height: 20),
+        ] else ...[
+          // FEEDBACK INPUT START
+          TextField(
+            controller: _feedbackController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: 'Write your feedback...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 12),
+          const SizedBox(height: 12),
 
-        // SUBMIT BUTTON
-        ElevatedButton(
-          onPressed: () async => await _submitFeedback(context),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.pink,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          // RATING DROPDOWN
+          DropdownButtonFormField<String>(
+            value: _selectedRating,
+            items:
+                [
+                  '1 Ratings',
+                  '2 Ratings',
+                  '3 Ratings',
+                  '4 Ratings',
+                  '5 Ratings',
+                ].map((rating) {
+                  return DropdownMenuItem<String>(
+                    value: rating,
+                    child: Text(rating),
+                  );
+                }).toList(),
+            onChanged: (value) {
+              _selectedRating = value!;
+            },
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+            ),
           ),
-          child: const Text('Submit Feedback'),
-        ),
-        const SizedBox(height: 20),
+          const SizedBox(height: 12),
+
+          // SUBMIT BUTTON
+          ElevatedButton(
+            onPressed: () async => await _submitFeedback(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.pink,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: const Text('Submit Feedback'),
+          ),
+          const SizedBox(height: 20),
+        ],
+
         // Ratings bar
         DropdownButtonFormField<String>(
           value: _selectedDisplayRating,

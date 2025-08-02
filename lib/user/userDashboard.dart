@@ -152,54 +152,57 @@ class _SavedTabState extends State<_SavedTab> {
           ),
         ),
         Expanded(
-          child: FutureBuilder<List<Map<String, dynamic>>>(
-            future: fetchSavedEvents(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: fetchSavedEvents(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(child: Text('No Saved Events'));
-              }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No Saved Events'));
+                }
 
-              final savedEvents = snapshot.data!;
-              return ListView.builder(
-                itemCount: savedEvents.length,
-                itemBuilder: (context, index) {
-                  final event = savedEvents[index];
-                  return EventCard(
-                    imageUrl: event['image'],
-                    title: event['title'],
-                    organiser: event['organiser'],
-                    tags: event['tags'],
-                    date: event['date'],
-                    eventId: event['eventId'],
-                    media: event['media'],
-                    description: event['description'],
-                    location: event['location'],
-                    geoPoint: event['geoPoint'],
-                    wsLink: event['wsLink'],
-                    parking: event['parking'],
-                    endDate: event['endDate'],
-                    onSaveTap: () {
-                      // RE FETCHING ON UNSAVE
-                      FirebaseFirestore.instance
-                          .collection('users')
-                          .doc(FirebaseAuth.instance.currentUser!.uid)
-                          .collection('savedEvents')
-                          .doc(event['eventId'])
-                          .delete()
-                          .then((_) {
-                            setState(() {
-                              // RE-TRIGGERED FILTERED RESULTS
+                final savedEvents = snapshot.data!;
+                return ListView.builder(
+                  itemCount: savedEvents.length,
+                  itemBuilder: (context, index) {
+                    final event = savedEvents[index];
+                    return EventCard(
+                      imageUrl: event['image'],
+                      title: event['title'],
+                      organiser: event['organiser'],
+                      tags: event['tags'],
+                      date: event['date'],
+                      eventId: event['eventId'],
+                      media: event['media'],
+                      description: event['description'],
+                      location: event['location'],
+                      geoPoint: event['geoPoint'],
+                      wsLink: event['wsLink'],
+                      parking: event['parking'],
+                      endDate: event['endDate'],
+                      onSaveTap: () {
+                        // RE FETCHING ON UNSAVE
+                        FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(FirebaseAuth.instance.currentUser!.uid)
+                            .collection('savedEvents')
+                            .doc(event['eventId'])
+                            .delete()
+                            .then((_) {
+                              setState(() {
+                                // RE-TRIGGERED FILTERED RESULTS
+                              });
                             });
-                          });
-                    },
-                  );
-                },
-              );
-            },
+                      },
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ),
       ],
@@ -292,7 +295,10 @@ class _AccountTabState extends State<_AccountTab> {
                   await FirebaseAuth.instance.signOut();
                   Provider.of<AppAuthProvider>(context, listen: false).logout();
                   // Reset theme to light mode on logout
-                  Provider.of<ThemeProvider>(context, listen: false).resetToLightTheme();
+                  Provider.of<ThemeProvider>(
+                    context,
+                    listen: false,
+                  ).resetToLightTheme();
                   Navigator.pushReplacementNamed(context, '/login');
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("You are logged out")),
@@ -1060,15 +1066,23 @@ class _EventCardState extends State<EventCard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(widget.date, style: const TextStyle(color: Colors.red)),
+                        Text(
+                          widget.date,
+                          style: const TextStyle(color: Colors.red),
+                        ),
                         const SizedBox(height: 4),
                         RichText(
                           text: TextSpan(
-                            style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+                            style: TextStyle(
+                              color:
+                                  Theme.of(context).textTheme.bodyLarge?.color,
+                            ),
                             children: [
                               TextSpan(
                                 text: widget.title,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               TextSpan(text: ' by ${widget.organiser}'),
                             ],
@@ -1098,14 +1112,18 @@ class _EventCardState extends State<EventCard> {
                         Wrap(
                           spacing: 4,
                           children:
-                              tagList.map((tag) => EventTag(label: tag)).toList(),
+                              tagList
+                                  .map((tag) => EventTag(label: tag))
+                                  .toList(),
                         ),
                       ],
                     ),
                   ),
                   // Save button on the right side with dynamic icon
                   IconButton(
-                    icon: Icon(_isSaved ? Icons.bookmark : Icons.bookmark_border),
+                    icon: Icon(
+                      _isSaved ? Icons.bookmark : Icons.bookmark_border,
+                    ),
                     onPressed: () {
                       widget.onSaveTap();
                       // Toggle the saved state immediately for better UX
