@@ -93,14 +93,23 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
           await ref.putFile(File(image.path));
           final downloadUrl = await ref.getDownloadURL();
 
-          // Update Firestore with new image URL
-          await FirebaseFirestore.instance
-              .collection('organisers')
-              .doc(user.uid)
-              .update({
-            'profileImageUrl': downloadUrl,
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
+          // Update Firestore with new image URL in both collections
+          await Future.wait([
+            FirebaseFirestore.instance
+                .collection('organisers')
+                .doc(user.uid)
+                .update({
+              'profileImageUrl': downloadUrl,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }),
+            FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .update({
+              'profileImageUrl': downloadUrl,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }),
+          ]);
 
           // Update local state
           setState(() {

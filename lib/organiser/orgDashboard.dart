@@ -69,7 +69,7 @@ class _OrganiserDashboardState extends State<OrganiserDashboard> {
     if (doc.exists) {
       setState(() {
         organiserStatus = doc['status'];
-        _organiserName = doc['picName'] ?? '';
+        _organiserName = doc['organizationName'] ?? '';
       });
       
       // Fetch events if approved
