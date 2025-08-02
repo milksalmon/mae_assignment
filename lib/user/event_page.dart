@@ -3,124 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-
-// class EventPage extends StatelessWidget {
-//   final String eventId;
-//   final String imageUrl;
-//   final String title;
-//   final String organiser;
-//   final String tags;
-//   final String date;
-//   final List<String> media;
-//   final String description;
-
-//   const EventPage({
-//     Key? key,
-//     required this.eventId,
-//     required this.imageUrl,
-//     required this.title,
-//     required this.organiser,
-//     required this.tags,
-//     required this.date,
-//     required this.media,
-//     required this.description,
-//   }) : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final tagList = tags.split(',').map((tag) => tag.trim()).toList();
-
-//     return Scaffold(
-//       backgroundColor: Colors.white,
-//       appBar: AppBar(title: const Text('Event Page')),
-//       body: SingleChildScrollView(
-//         padding: const EdgeInsets.all(16),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             imageUrl.isNotEmpty
-//                 ? Image.network(imageUrl, fit: BoxFit.cover)
-//                 : Container(
-//                   height: 200,
-//                   color: Colors.grey[300],
-//                   child: const Center(child: Icon(Icons.image)),
-//                 ),
-//             const SizedBox(height: 16),
-//             Text(date, style: const TextStyle(color: Colors.red)),
-//             const SizedBox(height: 8),
-//             Text(
-//               title,
-//               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-//             ),
-//             const SizedBox(height: 4),
-//             Text('by $organiser', style: const TextStyle(fontSize: 16)),
-//             const SizedBox(height: 12),
-//             Wrap(
-//               spacing: 6,
-//               children: tagList.map((tag) => Chip(label: Text(tag))).toList(),
-//             ),
-//             const SizedBox(height: 20),
-//             if (media.isNotEmpty) ...[
-//               const SizedBox(height: 20),
-//               const Text(
-//                 'More Media:',
-//                 style: TextStyle(fontWeight: FontWeight.bold),
-//               ),
-//               const SizedBox(height: 8),
-//               SizedBox(
-//                 height: 100,
-//                 child: ListView.builder(
-//                   scrollDirection: Axis.horizontal,
-//                   itemCount: media.length,
-//                   itemBuilder: (context, index) {
-//                     return Padding(
-//                       padding: const EdgeInsets.only(right: 8.0),
-//                       child: GestureDetector(
-//                         onTap: () {
-//                           showDialog(
-//                             context: context,
-//                             builder:
-//                                 (_) => Dialog(
-//                                   child: InteractiveViewer(
-//                                     panEnabled: true,
-//                                     minScale: 0.5,
-//                                     maxScale: 4,
-//                                     child: Image.network(
-//                                       media[index],
-//                                       fit: BoxFit.contain,
-//                                     ),
-//                                   ),
-//                                 ),
-//                           );
-//                         },
-//                         child: ClipRRect(
-//                           borderRadius: BorderRadius.circular(8),
-//                           child: Image.network(
-//                             media[index],
-//                             width: 120,
-//                             height: 100,
-//                             fit: BoxFit.cover,
-//                           ),
-//                         ),
-//                       ),
-//                     );
-//                   },
-//                 ),
-//               ),
-//             ],
-//             const Text(
-//               'Event Details:',
-//               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-//             ),
-//             const SizedBox(height: 8),
-//             Text(description),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EventPage extends StatelessWidget {
   final String eventId;
@@ -176,31 +59,31 @@ class EventPage extends StatelessWidget {
             // Main image with media gallery
             _buildImageSection(),
             const SizedBox(height: 16),
-            
+
             // Title and basic info
             _buildTitleSection(tagList),
             const SizedBox(height: 20),
-            
+
             // Follow button and group info
             _buildFollowSection(),
             const SizedBox(height: 20),
-            
+
             // Date & Time
             _buildDateTimeSection(),
             const SizedBox(height: 20),
-            
+
             // Location
             _buildLocationSection(),
             const SizedBox(height: 20),
-            
+
             // Description
             _buildDescriptionSection(),
             const SizedBox(height: 32),
-            
+
             // Vendor Chat Section
             _buildVendorChatSection(context),
             const SizedBox(height: 32),
-            
+
             // Feedback Section
             _buildFeedbackSection(),
           ],
@@ -214,19 +97,20 @@ class EventPage extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: imageUrl.isNotEmpty
-              ? Image.network(
-                  imageUrl,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                )
-              : Container(
-                  height: 200,
-                  width: double.infinity,
-                  color: Colors.grey[300],
-                  child: const Center(child: Icon(Icons.image, size: 50)),
-                ),
+          child:
+              imageUrl.isNotEmpty
+                  ? Image.network(
+                    imageUrl,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  )
+                  : Container(
+                    height: 200,
+                    width: double.infinity,
+                    color: Colors.grey[300],
+                    child: const Center(child: Icon(Icons.image, size: 50)),
+                  ),
         ),
         if (media.length > 1)
           Positioned(
@@ -263,17 +147,28 @@ class EventPage extends StatelessWidget {
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
-          children: tagList.map((tag) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.pink,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              tag,
-              style: const TextStyle(fontSize: 12, color: Colors.white),
-            ),
-          )).toList(),
+          children:
+              tagList
+                  .map(
+                    (tag) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.pink,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        tag,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
         ),
       ],
     );
@@ -341,10 +236,7 @@ class EventPage extends StatelessWidget {
         const SizedBox(height: 8),
         Row(
           children: [
-            Text(
-              date,
-              style: const TextStyle(fontSize: 14),
-            ),
+            Text(date, style: const TextStyle(fontSize: 14)),
             const SizedBox(width: 16),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -352,10 +244,7 @@ class EventPage extends StatelessWidget {
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text(
-                'Coming Soon',
-                style: TextStyle(fontSize: 12),
-              ),
+              child: const Text('Coming Soon', style: TextStyle(fontSize: 12)),
             ),
           ],
         ),
@@ -400,6 +289,54 @@ class EventPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (media.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          const Text(
+            'More Media:',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 100,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: media.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder:
+                            (_) => Dialog(
+                              child: InteractiveViewer(
+                                panEnabled: true,
+                                minScale: 0.5,
+                                maxScale: 4,
+                                child: Image.network(
+                                  media[index],
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                      );
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        media[index],
+                        width: 120,
+                        height: 100,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
         const Text(
           'Description',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -440,10 +377,7 @@ class EventPage extends StatelessWidget {
               children: [
                 Text(
                   'Are you a Vendor? Chat with Us.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -477,7 +411,7 @@ class EventPage extends StatelessWidget {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 16),
-        
+
         // Ratings bar
         Container(
           width: double.infinity,
@@ -491,14 +425,17 @@ class EventPage extends StatelessWidget {
             children: [
               Text(
                 '5 Ratings',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               Icon(Icons.keyboard_arrow_down, color: Colors.white),
             ],
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Feedback items
         ...List.generate(3, (index) => _buildFeedbackItem()),
       ],
@@ -545,16 +482,19 @@ class EventPage extends StatelessWidget {
   void _showChatDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Vendor Chat'),
-        content: const Text('Chat functionality would be implemented here with real-time messaging.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Vendor Chat'),
+            content: const Text(
+              'Chat functionality would be implemented here with real-time messaging.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }

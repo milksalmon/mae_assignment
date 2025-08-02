@@ -8,6 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'event_page.dart';
+import 'package:geocoding/geocoding.dart';
 
 class UserDashboard extends StatefulWidget {
   const UserDashboard({super.key});
@@ -44,6 +45,20 @@ class _AccountTab extends StatefulWidget {
   State<_AccountTab> createState() => _AccountTabState();
 }
 
+// CONVERT THE GEOLOCATION FROM FIRESTORE DATABASE TO ACTUAL LOCATION
+Future<String> getCityFromGeoPoint(GeoPoint geoPoint) async {
+  List<Placemark> placemarks = await placemarkFromCoordinates(
+    geoPoint.latitude,
+    geoPoint.longitude,
+  );
+
+  if (placemarks.isNotEmpty) {
+    return placemarks[0].locality ?? 'Unknown';
+  }
+  return 'Unknown';
+}
+// CONVERT GEOLOCATION END
+
 class _SavedTabState extends State<_SavedTab> {
   @override
   Widget build(BuildContext context) {
@@ -71,6 +86,18 @@ class _SavedTabState extends State<_SavedTab> {
 
         if (eventSnapshot.exists) {
           final data = eventSnapshot.data()!;
+          // CONVERT GEOLOCATION TO CITY NAME
+          String city = 'Unknown';
+          try {
+            if (data['location'] != null && data['location'] is GeoPoint) {
+              city = await getCityFromGeoPoint(
+                data['location'],
+              ).timeout(Duration(seconds: 3), onTimeout: () => 'Unknown');
+            }
+          } catch (e) {
+            print('Failed to fetch city: $e');
+            city = 'Unknown';
+          }
           savedEvents.add({
             'eventId': eventId,
             'image': data['images'] ?? '',
@@ -84,6 +111,7 @@ class _SavedTabState extends State<_SavedTab> {
                 (data['media'] as List?)?.map((m) => m.toString()).toList() ??
                 [],
             'description': data['description'] ?? '',
+            'location': data['location'],
           });
         }
       }
@@ -133,6 +161,7 @@ class _SavedTabState extends State<_SavedTab> {
                     eventId: event['eventId'],
                     media: event['media'],
                     description: event['description'],
+                    location: event['location'],
                     onSaveTap: () {
                       // RE FETCHING ON UNSAVE
                       FirebaseFirestore.instance
@@ -241,9 +270,9 @@ class _AccountTabState extends State<_AccountTab> {
                   );
                 } catch (e) {
                   print('Log out failed, Error: $e');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Logout failed: $e")),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text("Logout failed: $e")));
                 }
               },
               child: const Text('LOGOUT'),
@@ -383,10 +412,7 @@ class _AccountTabState extends State<_AccountTab> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
             ),
-            child: const Text(
-              "Log Out",
-              style: TextStyle(color: Colors.white),
-            ),
+            child: const Text("Log Out", style: TextStyle(color: Colors.white)),
           ),
           const SizedBox(height: 30),
         ],
@@ -559,29 +585,42 @@ class _HomeTabState extends State<_HomeTab> {
     try {
       final snapshot =
           await FirebaseFirestore.instance.collection('event').get();
-      final events =
-          snapshot.docs.map((doc) {
-            final data = doc.data();
-            return {
-              'eventId': doc.id,
-              'image': data['images'] ?? '',
-              'title': data['eventName'] ?? '',
-              'organiser': data['orgName'] ?? '',
-              'tags': (data['tags'] as List?)?.join(',') ?? '',
-              'date': DateFormat(
-                'yyyy-M-dd HH:mm',
-              ).format(data['startDate']?.toDate().toLocal() ?? DateTime.now()),
-              'media':
-                  (data['media'] as List?)?.map((m) => m.toString()).toList() ??
-                  [],
-              'description': data['description'] ?? '',
-            };
-          }).toList();
+      List<Map<String, dynamic>> events = [];
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        String city = 'Unknown';
+        try {
+          if (data['location'] != null && data['location'] is GeoPoint) {
+            city = await getCityFromGeoPoint(
+              data['location'],
+            ).timeout(Duration(seconds: 3), onTimeout: () => 'Unknown');
+          }
+        } catch (e) {
+          print('Failed to fetch city: $e');
+          city = 'Unknown';
+        }
+
+        events.add({
+          'eventId': doc.id,
+          'image': data['images'] ?? '',
+          'title': data['eventName'] ?? '',
+          'organiser': data['orgName'] ?? '',
+          'tags': (data['tags'] as List?)?.join(',') ?? '',
+          'date': DateFormat(
+            'yyyy-M-dd HH:mm',
+          ).format(data['startDate']?.toDate().toLocal() ?? DateTime.now()),
+          'media':
+              (data['media'] as List?)?.map((m) => m.toString()).toList() ?? [],
+          'description': data['description'] ?? '',
+          'location': city,
+        });
+      }
 
       setState(() {
         _allEvents = events;
         _isLoading = false;
       });
+      print('Finished loading events: ${events.length}');
     } catch (e) {
       print('Error fetching events: $e');
     }
@@ -661,6 +700,7 @@ class _HomeTabState extends State<_HomeTab> {
                           eventId: event['eventId'],
                           media: event['media'],
                           description: event['description'],
+                          location: event['location'],
                           onSaveTap: () => toggleSaveEvent(event['eventId']),
                         );
                       },
@@ -678,6 +718,7 @@ class EventCard extends StatelessWidget {
   final String organiser;
   final String tags;
   final String date;
+  final String location;
   final String eventId;
   final List<String> media;
   final String description;
@@ -693,6 +734,7 @@ class EventCard extends StatelessWidget {
     required this.media,
     required this.description,
     required this.onSaveTap,
+    required this.location,
     Key? key,
   }) : super(key: key);
 
@@ -753,7 +795,7 @@ class EventCard extends StatelessWidget {
                   child: IconButton(
                     icon: Icon(Icons.bookmark_border),
                     onPressed: onSaveTap,
-                    color: Colors.white,
+                    color: Colors.pink,
                   ),
                 ),
               ],
@@ -777,6 +819,24 @@ class EventCard extends StatelessWidget {
                         TextSpan(text: ' by $organiser'),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on,
+                        size: 16,
+                        color: Colors.green,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        location,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Wrap(
