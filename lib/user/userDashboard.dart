@@ -928,7 +928,7 @@ class _HomeTabState extends State<_HomeTab> {
   }
 }
 
-class EventCard extends StatelessWidget {
+class EventCard extends StatefulWidget {
   final String imageUrl;
   final String title;
   final String organiser;
@@ -963,8 +963,39 @@ class EventCard extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<EventCard> createState() => _EventCardState();
+}
+
+class _EventCardState extends State<EventCard> {
+  bool _isSaved = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSavedStatus();
+  }
+
+  Future<void> _checkSavedStatus() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final savedRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('savedEvents')
+        .doc(widget.eventId);
+
+    final doc = await savedRef.get();
+    if (mounted) {
+      setState(() {
+        _isSaved = doc.exists;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final tagList = tags.split(',').map((tag) => tag.trim()).toList();
+    final tagList = widget.tags.split(',').map((tag) => tag.trim()).toList();
 
     return InkWell(
       onTap: () {
@@ -973,19 +1004,19 @@ class EventCard extends StatelessWidget {
           MaterialPageRoute(
             builder:
                 (context) => EventPage(
-                  eventId: eventId, // PASS EVENT ID
-                  imageUrl: imageUrl,
-                  title: title,
-                  organiser: organiser,
-                  tags: tags,
-                  date: date,
-                  media: media,
-                  description: description,
-                  locationName: location, // PASS LOCATION
-                  geoPoint: geoPoint,
-                  wsLink: wsLink,
-                  parking: parking,
-                  endDate: endDate,
+                  eventId: widget.eventId, // PASS EVENT ID
+                  imageUrl: widget.imageUrl,
+                  title: widget.title,
+                  organiser: widget.organiser,
+                  tags: widget.tags,
+                  date: widget.date,
+                  media: widget.media,
+                  description: widget.description,
+                  locationName: widget.location, // PASS LOCATION
+                  geoPoint: widget.geoPoint,
+                  wsLink: widget.wsLink,
+                  parking: widget.parking,
+                  endDate: widget.endDate,
                 ),
           ),
         );
@@ -1004,73 +1035,86 @@ class EventCard extends StatelessWidget {
                     top: Radius.circular(12),
                   ),
                   child:
-                      imageUrl.isEmpty
+                      widget.imageUrl.isEmpty
                           ? Container(
                             height: 160,
                             color: Colors.grey[300],
                             child: const Center(child: Icon(Icons.image)),
                           )
                           : Image.network(
-                            imageUrl,
+                            widget.imageUrl,
                             height: 160,
                             width: double.infinity,
                             fit: BoxFit.cover,
                           ),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: IconButton(
-                    icon: Icon(Icons.bookmark_border),
-                    onPressed: onSaveTap,
-                    color: Colors.pink,
-                  ),
                 ),
               ],
             ),
 
             Padding(
               padding: const EdgeInsets.all(12.0),
-              child: Column(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(date, style: const TextStyle(color: Colors.red)),
-                  const SizedBox(height: 4),
-                  RichText(
-                    text: TextSpan(
-                      style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        TextSpan(
-                          text: title,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        Text(widget.date, style: const TextStyle(color: Colors.red)),
+                        const SizedBox(height: 4),
+                        RichText(
+                          text: TextSpan(
+                            style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+                            children: [
+                              TextSpan(
+                                text: widget.title,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              TextSpan(text: ' by ${widget.organiser}'),
+                            ],
+                          ),
                         ),
-                        TextSpan(text: ' by $organiser'),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              size: 16,
+                              color: Colors.green,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                widget.location,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 4,
+                          children:
+                              tagList.map((tag) => EventTag(label: tag)).toList(),
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        size: 16,
-                        color: Colors.green,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        location,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.green,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 4,
-                    children:
-                        tagList.map((tag) => EventTag(label: tag)).toList(),
+                  // Save button on the right side with dynamic icon
+                  IconButton(
+                    icon: Icon(_isSaved ? Icons.bookmark : Icons.bookmark_border),
+                    onPressed: () {
+                      widget.onSaveTap();
+                      // Toggle the saved state immediately for better UX
+                      setState(() {
+                        _isSaved = !_isSaved;
+                      });
+                    },
+                    color: Colors.pink,
+                    iconSize: 28,
                   ),
                 ],
               ),

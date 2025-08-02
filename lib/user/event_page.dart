@@ -293,7 +293,7 @@ class _EventPageState extends State<EventPage> {
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF4CAF50),
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 70, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
