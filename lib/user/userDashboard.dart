@@ -8,6 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'event_page.dart';
+import 'edit_profile.dart';
 import 'package:geocoding/geocoding.dart';
 
 class UserDashboard extends StatefulWidget {
@@ -244,7 +245,14 @@ class _ReminderTabState extends State<_ReminderTab> {
 
 // Account Widgets
 class _AccountTabState extends State<_AccountTab> {
-  // Add state, async calls, etc. here
+  // Add a key to force rebuild when returning from edit profile
+  Key _futureBuilderKey = UniqueKey();
+
+  void _refreshProfile() {
+    setState(() {
+      _futureBuilderKey = UniqueKey();
+    });
+  }
 
   void _showLogoutConfirmationDialog(BuildContext context) {
     showDialog(
@@ -287,138 +295,194 @@ class _AccountTabState extends State<_AccountTab> {
 
   @override
   Widget build(BuildContext context) {
-    final googleUser = FirebaseAuth.instance.currentUser;
-    final googleName = googleUser?.displayName ?? 'No name';
-    final googleEmail = googleUser?.email ?? 'No email';
-    final googlePhotoUrl = googleUser?.photoURL;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              margin: const EdgeInsets.only(left: 20),
-              child: Text(
-                "Account",
-                style: GoogleFonts.montserrat(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFFFF2F67),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          CircleAvatar(
-            radius: 50,
-            backgroundColor: Colors.grey,
-            backgroundImage:
-                (googlePhotoUrl != null && googlePhotoUrl.isNotEmpty)
-                    ? NetworkImage(googlePhotoUrl)
-                    : null,
-            child:
-                (googlePhotoUrl == null || googlePhotoUrl.isEmpty)
-                    ? const Icon(Icons.person, size: 50, color: Colors.white)
-                    : null,
-          ),
-          const SizedBox(height: 10),
-          Text(
-            googleName,
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          Text(googleEmail, style: const TextStyle(color: Colors.grey)),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      return const Center(child: Text('Not logged in'));
+    }
+
+    return FutureBuilder<DocumentSnapshot>(
+      key: _futureBuilderKey,
+      future:
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentUser.uid)
+              .get(),
+      builder: (context, snapshot) {
+        String displayName = currentUser.displayName ?? 'No name';
+        String email = currentUser.email ?? 'No email';
+        String? profileImageUrl = currentUser.photoURL;
+
+        // If we have Firestore data, use custom values if available
+        if (snapshot.hasData && snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+
+          // Use custom name if available, otherwise fall back to Firebase Auth name
+          displayName = data['customName'] ?? data['name'] ?? displayName;
+
+          // Use custom profile image if available, otherwise fall back to Google photo
+          final customImageUrl =
+              data['customProfileImageUrl'] ?? data['profileImageUrl'];
+          if (customImageUrl != null && customImageUrl.isNotEmpty) {
+            profileImageUrl = customImageUrl;
+          }
+        }
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              TextButton(
-                onPressed: () {},
-                child: const Text(
-                  "0 Following",
-                  style: TextStyle(fontWeight: FontWeight.bold),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  margin: const EdgeInsets.only(left: 20),
+                  child: Text(
+                    "Account",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFFFF2F67),
+                    ),
+                  ),
                 ),
               ),
+              const SizedBox(height: 20),
+              CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.grey,
+                backgroundImage:
+                    (profileImageUrl != null && profileImageUrl.isNotEmpty)
+                        ? NetworkImage(profileImageUrl)
+                        : null,
+                child:
+                    (profileImageUrl == null || profileImageUrl.isEmpty)
+                        ? const Icon(
+                          Icons.person,
+                          size: 50,
+                          color: Colors.white,
+                        )
+                        : null,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                displayName,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(email, style: const TextStyle(color: Colors.grey)),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    onPressed: () {},
+                    child: const Text(
+                      "0 Following",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  // Navigate to edit profile and refresh when returning
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const EditProfilePage(),
+                    ),
+                  );
+                  // Refresh the profile data when returning
+                  _refreshProfile();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 30,
+                    vertical: 12,
+                  ),
+                ),
+                child: const Text(
+                  "Edit Profile",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              const SizedBox(height: 30, width: double.infinity),
+              sectionTitle("Preferences"),
+              ListTile(
+                leading: const Icon(Icons.dark_mode),
+                title: const Text("Dark Mode"),
+                trailing: Switch(value: false, onChanged: (_) {}),
+              ),
+              Divider(),
+              // Tab Swipe toggle
+              ListTile(
+                leading: const Icon(Icons.airline_stops_sharp),
+                title: const Text("Toggle Swiping Tabs"),
+                trailing: Switch(
+                  value: widget.swipeNavigationEnabled,
+                  onChanged: widget.onSwipeNavigationChanged,
+                ),
+              ),
+              // ListTile(
+              //   leading: const Icon(Icons.workspaces),
+              //   title: const Text("Followed Organisers"),
+              //   onTap: () {},
+              // ),
+              // sectionTitle("Connected Accounts"),
+              // ListTile(
+              //   leading: Image.asset(
+              //     "assets/google.png",
+              //     height: 24,
+              //   ), // Replace with your asset
+              //   title: Text(
+              //     "Google\n$googleEmail",
+              //     style: const TextStyle(height: 1.5),
+              //   ),
+              //   trailing: TextButton(
+              //     onPressed: () {},
+              //     child: const Text("Disconnect"),
+              //   ),
+              // ),
+              // sectionTitle("Rules & Regulations"),
+              // ListTile(
+              //   leading: const Icon(Icons.description_outlined),
+              //   title: const Text("Privacy Policy"),
+              //   onTap: () {},
+              // ),
+              const SizedBox(height: 80),
+              ElevatedButton(
+                onPressed: () {
+                  _showLogoutConfirmationDialog(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 12,
+                  ),
+                ),
+                child: const Text(
+                  "Log Out",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              const SizedBox(height: 30),
             ],
           ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-            ),
-            child: const Text(
-              "Edit Profile",
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-          const SizedBox(height: 30, width: double.infinity),
-          sectionTitle("Preferences"),
-          ListTile(
-            leading: const Icon(Icons.dark_mode),
-            title: const Text("Dark Mode"),
-            trailing: Switch(value: false, onChanged: (_) {}),
-          ),
-          Divider(),
-          // Tab Swipe toggle
-          ListTile(
-            leading: const Icon(Icons.airline_stops_sharp),
-            title: const Text("Toggle Swiping Tabs"),
-            trailing: Switch(
-              value: widget.swipeNavigationEnabled,
-              onChanged: widget.onSwipeNavigationChanged,
-            ),
-          ),
-          // ListTile(
-          //   leading: const Icon(Icons.workspaces),
-          //   title: const Text("Followed Organisers"),
-          //   onTap: () {},
-          // ),
-          // sectionTitle("Connected Accounts"),
-          // ListTile(
-          //   leading: Image.asset(
-          //     "assets/google.png",
-          //     height: 24,
-          //   ), // Replace with your asset
-          //   title: Text(
-          //     "Google\n$googleEmail",
-          //     style: const TextStyle(height: 1.5),
-          //   ),
-          //   trailing: TextButton(
-          //     onPressed: () {},
-          //     child: const Text("Disconnect"),
-          //   ),
-          // ),
-          // sectionTitle("Rules & Regulations"),
-          // ListTile(
-          //   leading: const Icon(Icons.description_outlined),
-          //   title: const Text("Privacy Policy"),
-          //   onTap: () {},
-          // ),
-          const SizedBox(height: 80),
-          ElevatedButton(
-            onPressed: () {
-              _showLogoutConfirmationDialog(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-            ),
-            child: const Text("Log Out", style: TextStyle(color: Colors.white)),
-          ),
-          const SizedBox(height: 30),
-        ],
-      ),
+        );
+      },
     );
   }
 
