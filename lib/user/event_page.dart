@@ -20,6 +20,8 @@ class EventPage extends StatelessWidget {
   final String locationName;
   final List<String> media;
   final String description;
+  final String wsLink;
+  final String parking;
 
   const EventPage({
     Key? key,
@@ -33,6 +35,8 @@ class EventPage extends StatelessWidget {
     required this.locationName,
     required this.media,
     required this.description,
+    required this.wsLink,
+    required this.parking,
   }) : super(key: key);
 
   @override
@@ -78,6 +82,9 @@ class EventPage extends StatelessWidget {
             _buildDateTimeSection(),
             const SizedBox(height: 20),
 
+            // DISPLAYING PARKING
+            Text('Parking: $parking'),
+            const SizedBox(height: 20),
             // Location
             _buildLocationSection(),
             const SizedBox(height: 20),
@@ -411,18 +418,18 @@ class EventPage extends StatelessWidget {
         Text(description),
         const SizedBox(height: 16),
         // Sample bullet points
-        const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [Text('• '), Text('Lorem ipsum')]),
-            SizedBox(height: 4),
-            Row(children: [Text('• '), Text('Lorem ipsum')]),
-            SizedBox(height: 4),
-            Row(children: [Text('• '), Text('Lorem ipsum')]),
-            SizedBox(height: 4),
-            Row(children: [Text('• '), Text('Lorem ipsum')]),
-          ],
-        ),
+        // const Column(
+        //   crossAxisAlignment: CrossAxisAlignment.start,
+        //   children: [
+        //     Row(children: [Text('• '), Text('Lorem ipsum')]),
+        //     SizedBox(height: 4),
+        //     Row(children: [Text('• '), Text('Lorem ipsum')]),
+        //     SizedBox(height: 4),
+        //     Row(children: [Text('• '), Text('Lorem ipsum')]),
+        //     SizedBox(height: 4),
+        //     Row(children: [Text('• '), Text('Lorem ipsum')]),
+        //   ],
+        // ),
       ],
     );
   }
@@ -552,11 +559,15 @@ class EventPage extends StatelessWidget {
           (context) => AlertDialog(
             title: const Text('Vendor Chat'),
             content: const Text(
-              'Chat functionality would be implemented here with real-time messaging.',
+              'Chat with vendor now !!. Dont miss the oppurtunity',
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => launchUrl(Uri.parse(wsLink)),
+                child: const Text('Join Chat'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
                 child: const Text('Close'),
               ),
             ],

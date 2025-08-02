@@ -114,6 +114,8 @@ class _SavedTabState extends State<_SavedTab> {
             'description': data['description'] ?? '',
             'location': city,
             'geoPoint': data['location'],
+            'wsLink': data['wsLink'],
+            'parking': data['parking'],
           });
         }
       }
@@ -165,6 +167,8 @@ class _SavedTabState extends State<_SavedTab> {
                     description: event['description'],
                     location: event['location'],
                     geoPoint: event['geoPoint'],
+                    wsLink: event['wsLink'],
+                    parking: event['parking'],
                     onSaveTap: () {
                       // RE FETCHING ON UNSAVE
                       FirebaseFirestore.instance
@@ -680,6 +684,8 @@ class _HomeTabState extends State<_HomeTab> {
           'description': data['description'] ?? '',
           'location': city,
           'geoPoint': data['location'],
+          'wsLink': data['wsLink'] ?? '',
+          'parking': data['parking'] ?? '',
         });
       }
 
@@ -769,6 +775,8 @@ class _HomeTabState extends State<_HomeTab> {
                           description: event['description'],
                           location: event['location'],
                           geoPoint: event['geoPoint'],
+                          wsLink: event['wsLink'],
+                          parking: event['parking'],
                           onSaveTap: () => toggleSaveEvent(event['eventId']),
                         );
                       },
@@ -792,6 +800,8 @@ class EventCard extends StatelessWidget {
   final String description;
   final VoidCallback onSaveTap;
   final GeoPoint geoPoint;
+  final String wsLink;
+  final String parking;
 
   const EventCard({
     required this.imageUrl,
@@ -805,6 +815,8 @@ class EventCard extends StatelessWidget {
     required this.onSaveTap,
     required this.location,
     required this.geoPoint,
+    required this.wsLink,
+    required this.parking,
     Key? key,
   }) : super(key: key);
 
@@ -829,6 +841,8 @@ class EventCard extends StatelessWidget {
                   description: description,
                   locationName: location, // PASS LOCATION
                   geoPoint: geoPoint,
+                  wsLink: wsLink,
+                  parking: parking,
                 ),
           ),
         );
