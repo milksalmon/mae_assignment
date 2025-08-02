@@ -398,6 +398,17 @@ class _UploadEventFormState extends State<UploadEventForm> {
                                 'Current User:  ${FirebaseAuth.instance.currentUser}',
                               );
                               if (_formKey.currentState!.validate()) {
+                                if (_coverImage == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Please select a cover image before submitting.',
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+
                                 setState(() {
                                   _isUploading = true;
                                 });

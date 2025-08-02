@@ -751,7 +751,10 @@ class _HomeTabState extends State<_HomeTab> {
   Future<void> _fetchEvents() async {
     try {
       final snapshot =
-          await FirebaseFirestore.instance.collection('event').get();
+          await FirebaseFirestore.instance
+              .collection('event')
+              .orderBy('startDate', descending: true)
+              .get();
       List<Map<String, dynamic>> events = [];
       for (var doc in snapshot.docs) {
         final data = doc.data();
