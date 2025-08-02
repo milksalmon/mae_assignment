@@ -5,6 +5,9 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'search_page.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import 'event_page.dart';
 
 class UserDashboard extends StatefulWidget {
   const UserDashboard({super.key});
@@ -44,12 +47,48 @@ class _AccountTab extends StatefulWidget {
 class _SavedTabState extends State<_SavedTab> {
   @override
   Widget build(BuildContext context) {
-    // Replace with your actual saved events data
-    final savedEvents = [
-      'EXPOEVENT.png',
-      'COFFEEFEST.png',
-      // Add more saved event image names here
-    ];
+    // FETCHING ACTAUL EVENT DATA
+    Future<List<Map<String, dynamic>>> fetchSavedEvents() async {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return [];
+
+      final savedSnapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .collection('savedEvents')
+              .get();
+
+      List<Map<String, dynamic>> savedEvents = [];
+
+      for (var doc in savedSnapshot.docs) {
+        final eventId = doc.id;
+        final eventSnapshot =
+            await FirebaseFirestore.instance
+                .collection('event')
+                .doc(eventId)
+                .get();
+
+        if (eventSnapshot.exists) {
+          final data = eventSnapshot.data()!;
+          savedEvents.add({
+            'eventId': eventId,
+            'image': data['images'] ?? '',
+            'title': data['eventName'] ?? '',
+            'organiser': data['orgName'] ?? '',
+            'tags': (data['tags'] as List?)?.join(',') ?? '',
+            'date': DateFormat(
+              'yyyy-M-dd HH:mm',
+            ).format(data['startDate']?.toDate().toLocal() ?? DateTime.now()),
+            'media':
+                (data['media'] as List?)?.map((m) => m.toString()).toList() ??
+                [],
+            'description': data['description'] ?? '',
+          });
+        }
+      }
+      return savedEvents;
+    }
 
     return Column(
       children: [
@@ -69,14 +108,49 @@ class _SavedTabState extends State<_SavedTab> {
           ),
         ),
         Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            child: ListView.builder(
-              itemCount: savedEvents.length,
-              itemBuilder: (context, index) {
-                return EventCard(imageName: savedEvents[index]);
-              },
-            ),
+          child: FutureBuilder<List<Map<String, dynamic>>>(
+            future: fetchSavedEvents(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(child: Text('No Saved Events'));
+              }
+
+              final savedEvents = snapshot.data!;
+              return ListView.builder(
+                itemCount: savedEvents.length,
+                itemBuilder: (context, index) {
+                  final event = savedEvents[index];
+                  return EventCard(
+                    imageUrl: event['image'],
+                    title: event['title'],
+                    organiser: event['organiser'],
+                    tags: event['tags'],
+                    date: event['date'],
+                    eventId: event['eventId'],
+                    media: event['media'],
+                    description: event['description'],
+                    onSaveTap: () {
+                      // RE FETCHING ON UNSAVE
+                      FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(FirebaseAuth.instance.currentUser!.uid)
+                          .collection('savedEvents')
+                          .doc(event['eventId'])
+                          .delete()
+                          .then((_) {
+                            setState(() {
+                              // RE-TRIGGERED FILTERED RESULTS
+                            });
+                          });
+                    },
+                  );
+                },
+              );
+            },
           ),
         ),
       ],
@@ -422,32 +496,75 @@ class _HomeTabState extends State<_HomeTab> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  // Example event data
-  final List<Map<String, String>> _allEvents = [
-    {
-      'image': 'EXPOEVENT.png',
-      'title': 'Expo iFood',
-      'organiser': 'Pavillion Bukit Jalil',
-      'tags': 'Coffee,Japanese Food,Pastry',
-      'date': 'Fri, 11th July, 2:30pm',
-    },
-    {
-      'image': 'COFFEEFEST.png',
-      'title': 'Coffee Fest',
-      'organiser': 'KLCC',
-      'tags': 'Coffee,Pastry',
-      'date': 'Sat, 12th July, 10:00am',
-    },
-    // Add more events as needed
-  ];
+  List<Map<String, dynamic>> _allEvents = [];
+  bool _isLoading = true;
 
-  List<Map<String, String>> get _filteredEvents {
-    if (_searchQuery.isEmpty) return _allEvents;
+  // LOGIC OF SAVED EVENTS
+  Future<void> toggleSaveEvent(String eventId) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final savedRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('savedEvents')
+        .doc(eventId);
+
+    final doc = await savedRef.get();
+
+    if (doc.exists) {
+      await savedRef.delete(); // TO UNSAVE
+    } else {
+      await savedRef.set({'savedAt': FieldValue.serverTimestamp()});
+    }
+  }
+
+  // LOGIC SAVED EVENTS END
+  @override
+  void initState() {
+    super.initState();
+    _fetchEvents();
+  }
+
+  Future<void> _fetchEvents() async {
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance.collection('event').get();
+      final events =
+          snapshot.docs.map((doc) {
+            final data = doc.data();
+            return {
+              'eventId': doc.id,
+              'image': data['images'] ?? '',
+              'title': data['eventName'] ?? '',
+              'organiser': data['orgName'] ?? '',
+              'tags': (data['tags'] as List?)?.join(',') ?? '',
+              'date': DateFormat(
+                'yyyy-M-dd HH:mm',
+              ).format(data['startDate']?.toDate().toLocal() ?? DateTime.now()),
+              'media':
+                  (data['media'] as List?)?.map((m) => m.toString()).toList() ??
+                  [],
+              'description': data['description'] ?? '',
+            };
+          }).toList();
+
+      setState(() {
+        _allEvents = events;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching events: $e');
+    }
+  }
+
+  List<Map<String, dynamic>> get _filteredEvents {
+    final query = _searchQuery.toLowerCase();
+    if (query.isEmpty) return _allEvents;
     return _allEvents.where((event) {
-      final query = _searchQuery.toLowerCase();
-      return event['title']!.toLowerCase().contains(query) ||
-          event['organiser']!.toLowerCase().contains(query) ||
-          event['tags']!.toLowerCase().contains(query);
+      return event['title'].toLowerCase().contains(query) ||
+          event['organiser'].toLowerCase().contains(query) ||
+          event['tags'].toLowerCase().contains(query);
     }).toList();
   }
 
@@ -457,14 +574,6 @@ class _HomeTabState extends State<_HomeTab> {
     super.dispose();
   }
 
-  void _openSearchPage() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => SearchPage(allEvents: _allEvents),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -472,22 +581,22 @@ class _HomeTabState extends State<_HomeTab> {
       child: Column(
         children: [
           // Search bar with filter icon
-          GestureDetector(
-            onTap: _openSearchPage,
-            child: AbsorbPointer(
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search events...',
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24.0),
-                  ),
-                ),
+          TextField(
+            controller: _searchController,
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
+            decoration: InputDecoration(
+              hintText: 'Search events...',
+              prefixIcon: Icon(Icons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(24.0),
               ),
             ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           // Location
           Row(
             children: const [
@@ -507,13 +616,26 @@ class _HomeTabState extends State<_HomeTab> {
           SizedBox(height: 16),
           // Event list
           Expanded(
-            child: ListView.builder(
-              itemCount: _filteredEvents.length,
-              itemBuilder: (context, index) {
-                final event = _filteredEvents[index];
-                return EventCard(imageName: event['image'] ?? 'EXPOEVENT.png');
-              },
-            ),
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView.builder(
+                      itemCount: _filteredEvents.length,
+                      itemBuilder: (contet, index) {
+                        final event = _filteredEvents[index];
+                        return EventCard(
+                          imageUrl: event['image'],
+                          title: event['title'],
+                          organiser: event['organiser'],
+                          tags: event['tags'],
+                          date: event['date'],
+                          eventId: event['eventId'],
+                          media: event['media'],
+                          description: event['description'],
+                          onSaveTap: () => toggleSaveEvent(event['eventId']),
+                        );
+                      },
+                    ),
           ),
         ],
       ),
@@ -521,99 +643,117 @@ class _HomeTabState extends State<_HomeTab> {
   }
 }
 
-class EventCard extends StatefulWidget {
-  final String imageName;
-  const EventCard({this.imageName = 'EXPOEVENT.png', Key? key})
-    : super(key: key);
+class EventCard extends StatelessWidget {
+  final String imageUrl;
+  final String title;
+  final String organiser;
+  final String tags;
+  final String date;
+  final String eventId;
+  final List<String> media;
+  final String description;
+  final VoidCallback onSaveTap;
 
-  @override
-  State<EventCard> createState() => _EventCardState();
-}
-
-class _EventCardState extends State<EventCard> {
-  String? imageUrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadImage();
-  }
-
-  Future<void> _loadImage() async {
-    try {
-      final ref = FirebaseStorage.instance.ref().child(
-        'event_images/${widget.imageName}',
-      );
-      final url = await ref.getDownloadURL();
-      setState(() {
-        imageUrl = url;
-      });
-    } catch (e) {
-      // Optionally handle error, e.g. set a default imageUrl or log
-    }
-  }
+  const EventCard({
+    required this.imageUrl,
+    required this.title,
+    required this.organiser,
+    required this.tags,
+    required this.date,
+    required this.eventId,
+    required this.media,
+    required this.description,
+    required this.onSaveTap,
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final tagList = tags.split(',').map((tag) => tag.trim()).toList();
+
     return InkWell(
       onTap: () {
-        Navigator.pushNamed(context, '/event_page');
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => EventPage(
+                  eventId: eventId, // PASS EVENT ID
+                  imageUrl: imageUrl,
+                  title: title,
+                  organiser: organiser,
+                  tags: tags,
+                  date: date,
+                  media: media,
+                  description: description,
+                ),
+          ),
+        );
       },
       child: Card(
-        color: Color(0xFFF9FDF0),
+        color: const Color(0xFFF9FDF0),
         margin: const EdgeInsets.symmetric(vertical: 8),
         elevation: 3,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image section
-            ClipRRect(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-              child:
-                  imageUrl == null
-                      ? Container(
-                        height: 160,
-                        color: Colors.grey[300],
-                        child: const Center(child: CircularProgressIndicator()),
-                      )
-                      : Image.network(
-                        imageUrl!,
-                        height: 160,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(12),
+                  ),
+                  child:
+                      imageUrl.isEmpty
+                          ? Container(
+                            height: 160,
+                            color: Colors.grey[300],
+                            child: const Center(child: Icon(Icons.image)),
+                          )
+                          : Image.network(
+                            imageUrl,
+                            height: 160,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: IconButton(
+                    icon: Icon(Icons.bookmark_border),
+                    onPressed: onSaveTap,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
             ),
-            // Info section
+
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Fri, 11th July, 2:30pm',
-                    style: TextStyle(color: Colors.red),
-                  ),
-                  SizedBox(height: 4),
+                  Text(date, style: const TextStyle(color: Colors.red)),
+                  const SizedBox(height: 4),
                   RichText(
                     text: TextSpan(
-                      style: TextStyle(color: Colors.black),
-                      children: const [
+                      style: const TextStyle(color: Colors.black),
+                      children: [
                         TextSpan(
-                          text: 'Expo iFood',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          text: title,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        TextSpan(text: ' by Pavillion Bukit Jalil'),
+                        TextSpan(text: ' by $organiser'),
                       ],
                     ),
                   ),
-                  SizedBox(height: 8),
-                  Row(
-                    children: const [
-                      EventTag(label: "Coffee"),
-                      EventTag(label: "Japanese Food"),
-                      EventTag(label: "Pastry"),
-                    ],
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 4,
+                    children:
+                        tagList.map((tag) => EventTag(label: tag)).toList(),
                   ),
                 ],
               ),

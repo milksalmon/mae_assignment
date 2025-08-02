@@ -92,7 +92,7 @@ class MyApp extends StatelessWidget {
         '/organiserRegister': (context) => const OrganiserRegistration(),
         '/manageFeedback': (context) => const ManageFeedback(),
         '/OAM': (context) => const OrganizerAccountManagement(),
-        '/event_page': (context) => const EventPage(),
+        //'/event_page': (context) => const EventPage(),
         '/orgReg': (context) => const OrganiserRegister(),
         '/forgot': (context) => const ForgotPasswordScreen(),
         '/orgDashboard': (context) => const OrganiserDashboard(),

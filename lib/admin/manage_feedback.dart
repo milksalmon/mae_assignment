@@ -74,6 +74,43 @@ class _ManageFeedback extends State<ManageFeedback> {
         });
   }
 
+  // TO RESTRICT COMMENT & FEEDBACK
+  Future<void> restrictSelectedFeedback() async {
+    final selectedIds =
+        _selectedFeedback.entries
+            .where((entry) => entry.value)
+            .map((entry) => entry.key)
+            .toSet();
+
+    final toUpdate =
+        _ratingFilter
+            .where((item) => selectedIds.contains(item['id']))
+            .toList();
+
+    for (var feedback in toUpdate) {
+      try {
+        final eventId = feedback['eventId'];
+        final feedbackId = feedback['id'];
+
+        await FirebaseFirestore.instance
+            .collection('event')
+            .doc(eventId)
+            .collection('feedback')
+            .doc(feedbackId)
+            .update({'status': 'Restrict'});
+      } catch (e) {
+        print('Error updating status for feedback: ${feedback['id']}: $e');
+      }
+    }
+
+    // REFRESH THE LIST AFTER CHANGING THE STATUS
+    await fetchFeedbacks();
+    setState(() {
+      _selectedFeedback.clear();
+    });
+  }
+  // RESTRICT COMMENT & FEEDBACK END
+
   // TO DELETE COMMENT
   Future<void> deleteSelectedFeedback() async {
     final selectedIds =
@@ -102,6 +139,7 @@ class _ManageFeedback extends State<ManageFeedback> {
         print('Error deleting feedback: ${feedback['id']}: $e');
       }
     }
+    // DELETE COMMENT END
 
     // REFRESH THE UI AFTER DELETION
     await fetchFeedbacks();
@@ -133,16 +171,21 @@ class _ManageFeedback extends State<ManageFeedback> {
 
         for (var feedbackDoc in feedbackSnapshot.docs) {
           final feedbackData = feedbackDoc.data();
-          allFeedback.add({
-            'id': feedbackDoc.id, // AUTO ID
-            'eventId': eventId,
-            'name': feedbackData['name'] ?? '',
-            'comment': feedbackData['comment'] ?? '',
-            'rating': feedbackData['rating'] ?? '',
-            'eventName': eventName,
-            'timestamp': feedbackData['timestamp'],
-            //'vendor': vendorName,
-          });
+
+          // ONLY SHOW FEEDBACKS THAT IS "SAFE"
+          if ((feedbackData['status'] ?? '').toString().toLowerCase() ==
+              'safe') {
+            allFeedback.add({
+              'id': feedbackDoc.id, // AUTO ID
+              'eventId': eventId,
+              'name': feedbackData['name'] ?? '',
+              'comment': feedbackData['comment'] ?? '',
+              'rating': feedbackData['rating'] ?? '',
+              'eventName': eventName,
+              'timestamp': feedbackData['timestamp'],
+              //'vendor': vendorName,
+            });
+          }
         }
       }
 
@@ -155,25 +198,6 @@ class _ManageFeedback extends State<ManageFeedback> {
       setState(() {
         isLoading = false;
       });
-      // snapshot.docs.map((doc) {
-      //   final data = doc.data();
-      //   return {
-      //     'id': doc.id, // AUTO ID
-      //     'name': data['name'] ?? '',
-      //     'comment': data['comment'] ?? '',
-      //     'rating': data['rating'] ?? '',
-      //     'vendor': data['vendor'] ?? '',
-      //   };
-      // }).toList();
-
-      //     isLoading = false;
-      //   });
-      // } catch (e) {
-      //   print('Error fetching feedbacks: $e');
-      //   setState(() {
-      //     isLoading = false;
-      //   });
-      // }
     }
   }
 
@@ -428,11 +452,11 @@ class _ManageFeedback extends State<ManageFeedback> {
                   deleteSelectedFeedback();
                 }),
                 _buildActionButton('Restrict', Colors.orange, () {
-                  print('Restrict Button clicked');
+                  restrictSelectedFeedback();
                 }),
-                _buildActionButton('Block', Colors.black, () {
-                  print('Block Button clicked');
-                }),
+                // _buildActionButton('Block', Colors.black, () {
+                //   print('Block Button clicked');
+                // }),
               ],
             ),
           ),
