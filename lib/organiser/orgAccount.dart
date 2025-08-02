@@ -1,3 +1,4 @@
+// import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -25,6 +26,7 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
   String organiserPhotoUrl = '';
   String phoneNumber = '';
   bool isLoading = true;
+  String? selectedReason;
 
   @override
   void initState() {
@@ -153,6 +155,7 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
                       const SizedBox(height: 20),
                       sectionTitle("Account Controls"),
                       const SizedBox(height: 10),
+
                       ElevatedButton(
                         onPressed: () {
                           // Navigate to edit organiser profile
@@ -163,7 +166,8 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
                         ),
                         child: const Text("Edit Profile"),
                       ),
-                      const SizedBox(height: 8),
+
+                      const SizedBox(height: 10), // <-- same height
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
@@ -197,13 +201,286 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
                             await FirebaseAuth.instance.signOut();
                             if (context.mounted) {
                               Navigator.of(context).pushNamedAndRemoveUntil(
-                                '/login', 
+                                '/login',
                                 (route) => false,
                               );
                             }
                           }
                         },
                         child: const Text("Log Out"),
+                      ),
+
+                      const SizedBox(height: 10), // <-- consistent spacing
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () async {
+                          final reason = await showDialog<String>(
+                            context: context,
+                            builder: (context) {
+                              String? selectedReason;
+                              return AlertDialog(
+                                title: const Text(
+                                  "Why are you deleting your account?",
+                                ),
+                                content: StatefulBuilder(
+                                  builder: (context, setState) {
+                                    return Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        RadioListTile<String>(
+                                          title: const Text("Privacy concerns"),
+                                          value: "Privacy concerns",
+                                          groupValue: selectedReason,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              selectedReason = value;
+                                            });
+                                          },
+                                        ),
+                                        RadioListTile<String>(
+                                          title: const Text(
+                                            "Too many notifications",
+                                          ),
+                                          value: "Too many notifications",
+                                          groupValue: selectedReason,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              selectedReason = value;
+                                            });
+                                          },
+                                        ),
+                                        RadioListTile<String>(
+                                          title: const Text(
+                                            "Not User Friendly",
+                                          ),
+                                          value: "Not User Friendly",
+                                          groupValue: selectedReason,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              selectedReason = value;
+                                            });
+                                          },
+                                        ),
+                                        RadioListTile<String>(
+                                          title: const Text(
+                                            "I found a better app",
+                                          ),
+                                          value: "I found a better app",
+                                          groupValue: selectedReason,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              selectedReason = value;
+                                            });
+                                          },
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text("CANCEL"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      if (selectedReason != null) {
+                                        Navigator.pop(context, selectedReason);
+                                      }
+                                    },
+                                    child: const Text("CONTINUE"),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+
+                          if (reason != null) {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder:
+                                  (context) => AlertDialog(
+                                    title: const Text("Confirm Deletion"),
+                                    content: const Text(
+                                      "Are you sure you want to delete your account?\nThis action cannot be undone.",
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.pop(context, false),
+                                        child: const Text("No, I love JAMBU"),
+                                      ),
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.pop(context, true),
+                                        child: const Text(
+                                          "Yes, I don't like JAMBU",
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                            );
+
+                            if (confirm == true) {
+                              // 1. Prompt the user for their password (e.g., with a dialog)
+                              String? password = await showDialog<String>(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (context) {
+                                  final _formKey = GlobalKey<FormState>();
+                                  String input = '';
+                                  bool isLoading = false;
+                                  String? errorText;
+
+                                  return StatefulBuilder(
+                                    builder: (context, setState) {
+                                      return AlertDialog(
+                                        title: Text('Re-enter your password'),
+                                        content: Form(
+                                          key: _formKey,
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              TextFormField(
+                                                obscureText: true,
+                                                decoration: InputDecoration(
+                                                  labelText: 'Password',
+                                                  errorText: errorText,
+                                                ),
+                                                onChanged: (value) => input = value,
+                                                validator: (value) {
+                                                  if (value == null || value.isEmpty) {
+                                                    return 'Please enter your password';
+                                                  }
+                                                  return null;
+                                                },
+                                              ),
+                                              if (isLoading) CircularProgressIndicator(),
+                                            ],
+                                          ),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context, null),
+                                            child: Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () async {
+                                              if (_formKey.currentState!.validate()) {
+                                                setState(() => isLoading = true);
+                                                final user = FirebaseAuth.instance.currentUser;
+                                                try {
+                                                  final credential = EmailAuthProvider.credential(
+                                                    email: user!.email!,
+                                                    password: input,
+                                                  );
+                                                  await user.reauthenticateWithCredential(credential);
+                                                  setState(() => isLoading = false);
+                                                  Navigator.pop(context, input); // Only pop if correct
+                                                } on FirebaseAuthException catch (e) {
+                                                  setState(() {
+                                                    isLoading = false;
+                                                    errorText = e.code == 'wrong-password'
+                                                      ? 'Incorrect password. Please try again.'
+                                                      : 'Re-authentication failed: ${e.message}';
+                                                  });
+                                                }
+                                              }
+                                            },
+                                            child: Text('OK'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
+                              );
+                              final user = FirebaseAuth.instance.currentUser;
+
+                            bool reauthSuccess = false;
+                            if (password != null && user?.email != null) {
+                              final credential = EmailAuthProvider.credential(
+                                email: user!.email!,
+                                password: password,
+                              );
+                              try {
+                                await user.reauthenticateWithCredential(credential);
+                                reauthSuccess = true;
+                              } on FirebaseAuthException catch (e) {
+                                if (e.code == 'wrong-password') {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Incorrect password. Please try again.')),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Re-authentication failed: ${e.message}')),
+                                  );
+                                }
+                              }
+                            }
+                            if (reauthSuccess) {
+                              // Proceed with deletion logic
+
+                              try {
+
+                                final uid = user?.uid;
+
+                                if (uid != null) {
+                                  // Fetch organiser data from Firestore
+                                  final docSnapshot =
+                                      await FirebaseFirestore.instance
+                                          .collection('organisers')
+                                          .doc(uid)
+                                          .get();
+
+                                  final organiserData =
+                                      docSnapshot.data() ?? {};
+
+                                  // Save to deleted_accounts collection
+                                  await FirebaseFirestore.instance
+                                    .collection('deleted_accounts')
+                                    .doc(user?.uid)
+                                    .set({
+                                  'email': user?.email ?? '',
+                                  'organizationName': organiserData['organizationName'] ?? '',
+                                  'phoneNumber': organiserData['phoneNumber'] ?? '',
+                                  'picName': organiserData['picName'] ?? '',
+                                  'reason': selectedReason ?? '',
+                                  'status': 'deleted',
+                                  'deletedAt': FieldValue.serverTimestamp(),
+                                });
+
+                                  await FirebaseFirestore.instance.collection('organisers').doc(user?.uid).delete();
+
+                                  // delete user account
+                                  await user?.delete();
+
+                                  // Navigate to login page
+                                  if (context.mounted) {
+                                    Navigator.of(
+                                      context,
+                                    ).pushNamedAndRemoveUntil(
+                                      '/login',
+                                      (r) => false,
+                                    );
+                                  }
+                                }
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Error deleting account: $e"),
+                                  ),
+                                );
+                              }
+                            }
+                            }
+                          }
+                        },
+
+                        child: const Text("Delete Account"),
                       ),
                     ],
                   ),

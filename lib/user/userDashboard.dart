@@ -231,6 +231,45 @@ class _ReminderTabState extends State<_ReminderTab> {
 class _AccountTabState extends State<_AccountTab> {
   // Add state, async calls, etc. here
 
+  void _showLogoutConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Logout'),
+          content: const Text('Are you sure you want to log out?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('CANCEL'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop(); // Close the dialog first
+                try {
+                  await FirebaseAuth.instance.signOut();
+                  Provider.of<AppAuthProvider>(context, listen: false).logout();
+                  Navigator.pushReplacementNamed(context, '/login');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("You are logged out")),
+                  );
+                } catch (e) {
+                  print('Log out failed, Error: $e');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Logout failed: $e")),
+                  );
+                }
+              },
+              child: const Text('LOGOUT'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final googleUser = FirebaseAuth.instance.currentUser;
@@ -327,41 +366,31 @@ class _AccountTabState extends State<_AccountTab> {
           //   title: const Text("Followed Organisers"),
           //   onTap: () {},
           // ),
-          sectionTitle("Connected Accounts"),
-          ListTile(
-            leading: Image.asset(
-              "assets/google.png",
-              height: 24,
-            ), // Replace with your asset
-            title: Text(
-              "Google\n$googleEmail",
-              style: const TextStyle(height: 1.5),
-            ),
-            trailing: TextButton(
-              onPressed: () {},
-              child: const Text("Disconnect"),
-            ),
-          ),
-          sectionTitle("Rules & Regulations"),
-          ListTile(
-            leading: const Icon(Icons.description_outlined),
-            title: const Text("Privacy Policy"),
-            onTap: () {},
-          ),
-          const SizedBox(height: 20),
+          // sectionTitle("Connected Accounts"),
+          // ListTile(
+          //   leading: Image.asset(
+          //     "assets/google.png",
+          //     height: 24,
+          //   ), // Replace with your asset
+          //   title: Text(
+          //     "Google\n$googleEmail",
+          //     style: const TextStyle(height: 1.5),
+          //   ),
+          //   trailing: TextButton(
+          //     onPressed: () {},
+          //     child: const Text("Disconnect"),
+          //   ),
+          // ),
+          // sectionTitle("Rules & Regulations"),
+          // ListTile(
+          //   leading: const Icon(Icons.description_outlined),
+          //   title: const Text("Privacy Policy"),
+          //   onTap: () {},
+          // ),
+          const SizedBox(height: 80),
           ElevatedButton(
-            onPressed: () async {
-              try {
-                await FirebaseAuth.instance.signOut();
-                Provider.of<AppAuthProvider>(context, listen: false).logout();
-                Navigator.pushReplacementNamed(context, '/login');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("You are signed out")),
-                );
-                return;
-              } catch (e) {
-                print('Sign out failed, Error: $e');
-              }
+            onPressed: () {
+              _showLogoutConfirmationDialog(context);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
@@ -371,7 +400,7 @@ class _AccountTabState extends State<_AccountTab> {
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
             ),
             child: const Text(
-              "Sign Out",
+              "Log Out",
               style: TextStyle(color: Colors.white),
             ),
           ),
@@ -457,7 +486,7 @@ class _UserDashboard extends State<UserDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      // backgroundColor: Colors.white,
       bottomNavigationBar: NavigationBar(
         backgroundColor: const Color(0xFFECEFE6),
         selectedIndex: _selectedIndex,
