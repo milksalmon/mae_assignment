@@ -1,10 +1,16 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart' show canLaunchUrl, launchUrl;
 import 'package:url_launcher/url_launcher_string.dart';
 import '../providers/auth_provider.dart';
+import 'package:dio/dio.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
 
 class OrganizerAccountManagement extends StatefulWidget {
   const OrganizerAccountManagement({super.key});
@@ -380,7 +386,69 @@ class _OrganizerAccountManagementState
                                     Icons.download_rounded,
                                     color: Colors.black,
                                   ),
-                                  onTap: () => onLaunchUrl(url),
+                                  onTap: () async {
+                                    Navigator.pop(context);
+                                    final permissionGranted =
+                                        await _requestStoragePermission();
+                                    // final status =
+                                    //     await Permission.storage.request();
+
+                                    if (!permissionGranted) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Storage permission denied',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                      return;
+                                    }
+
+                                    // if (status.isGranted) {
+                                    try {
+                                      final directory = Directory(
+                                        '/storage/emulated/0/Download',
+                                      );
+                                      final savePath =
+                                          '${directory.path}/$fileName';
+
+                                      await Dio().download(url, savePath);
+
+                                      // final downloadsDir =
+                                      //     await getExternalStorageDirectory();
+                                      // if (downloadsDir == null) {
+                                      //   throw 'Downloads directory not available';
+                                      // }
+
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Downloaded to $savePath',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Download failed: $e',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
                                 );
                               }).toList(),
                         ),
@@ -437,4 +505,17 @@ String _formatCount(int value) {
   } else {
     return value.toString();
   }
+}
+
+// FUNCTION TO REQUEST WRITE INTERNAL STORAGE
+Future<bool> _requestStoragePermission() async {
+  if (await Permission.storage.request().isGranted) {
+    return true;
+  }
+
+  if (await Permission.manageExternalStorage.request().isGranted) {
+    return true;
+  }
+
+  return false;
 }

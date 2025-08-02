@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
@@ -11,6 +12,10 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:requestLegacyExternalStorage="true">
+        <!-- The API key for Google Maps, accept when merging -->
+        <meta-data
+          android:name="com.google.android.geo.API_KEY"
+          android:value = "AIzaSyB30HgRfK2vOxqIffJO-SBMH5K6diEg7LM" />
 
         <!-- The API key for Google Maps, accept when merging -->
         <meta-data
