@@ -44,10 +44,8 @@ class EventPage extends StatelessWidget {
     final tagList = tags.split(',').map((tag) => tag.trim()).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Event Page'),
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: Container(
@@ -244,7 +242,7 @@ class EventPage extends StatelessWidget {
     String eventStatus;
     if (parsedDate != null) {
       eventStatus =
-          parsedDate.isAfter(DateTime.now()) ? 'Coming Soon' : 'On-Going';
+          parsedDate.isAfter(DateTime.now()) ? 'Coming Soon' : 'OnGoing';
     } else {
       eventStatus = 'Unknown';
     }
@@ -270,8 +268,9 @@ class EventPage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+                // color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[200]!),
               ),
               child: Text(eventStatus, style: const TextStyle(fontSize: 12)),
             ),
@@ -438,7 +437,7 @@ class EventPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        // color: Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[200]!),
       ),
