@@ -411,6 +411,7 @@ class OrganiserEventsWidget extends StatelessWidget {
                             organiser: event['organiser'],
                             tags: event['tags'],
                             date: event['date'],
+                            endDate: event['endDate'],
                             eventId: event['eventId'],
                             media: event['media'],
                             description: event['description'],
