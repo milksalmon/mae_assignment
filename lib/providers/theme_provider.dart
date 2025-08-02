@@ -26,6 +26,14 @@ class ThemeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Reset theme to light mode (useful for logout)
+  void resetToLightTheme() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    _isDarkMode = false;
+    prefs.setBool(_keyDarkMode, false);
+    notifyListeners();
+  }
+
   // Get the current theme data
   ThemeData get themeData {
     return _isDarkMode ? darkTheme : lightTheme;

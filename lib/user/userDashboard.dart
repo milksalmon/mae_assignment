@@ -289,6 +289,8 @@ class _AccountTabState extends State<_AccountTab> {
                 try {
                   await FirebaseAuth.instance.signOut();
                   Provider.of<AppAuthProvider>(context, listen: false).logout();
+                  // Reset theme to light mode on logout
+                  Provider.of<ThemeProvider>(context, listen: false).resetToLightTheme();
                   Navigator.pushReplacementNamed(context, '/login');
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("You are logged out")),
