@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 
 //your mergin ah??? accept this
 class OrganiserAccountTab extends StatefulWidget {
@@ -26,7 +29,10 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
   String organiserPhotoUrl = '';
   String phoneNumber = '';
   bool isLoading = true;
+  bool isUploadingImage = false;
   String? selectedReason;
+  
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -46,12 +52,14 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
                 .get();
 
         if (doc.exists) {
+          final data = doc.data()!;
           setState(() {
-            organisationName = doc['organizationName'] ?? '';
-            picName = doc['picName'] ?? '';
-            organiserEmail = doc['email'] ?? user.email ?? '';
-            organiserPhotoUrl = user.photoURL ?? '';
-            phoneNumber = doc['phoneNumber'] ?? '';
+            organisationName = data['organizationName'] ?? '';
+            picName = data['picName'] ?? '';
+            organiserEmail = data['email'] ?? user.email ?? '';
+            // Only need profileImageUrl for organiser accounts
+            organiserPhotoUrl = data['profileImageUrl'] ?? '';
+            phoneNumber = data['phoneNumber'] ?? '';
             isLoading = false;
           });
         }
@@ -61,6 +69,61 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 75,
+      );
+      
+      if (image != null) {
+        setState(() {
+          isUploadingImage = true;
+        });
+
+        // Upload image to Firebase Storage
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          final ref = FirebaseStorage.instance
+              .ref()
+              .child('organiser_profile_images')
+              .child('${user.uid}.jpg');
+          
+          await ref.putFile(File(image.path));
+          final downloadUrl = await ref.getDownloadURL();
+
+          // Update Firestore with new image URL
+          await FirebaseFirestore.instance
+              .collection('organisers')
+              .doc(user.uid)
+              .update({
+            'profileImageUrl': downloadUrl,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+          // Update local state
+          setState(() {
+            organiserPhotoUrl = downloadUrl;
+            isUploadingImage = false;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profile picture updated successfully')),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() {
+        isUploadingImage = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating profile picture: $e')),
+      );
     }
   }
 
@@ -75,13 +138,66 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              CircleAvatar(
-                radius: 48,
-                backgroundImage:
-                    organiserPhotoUrl.isNotEmpty
-                        ? NetworkImage(organiserPhotoUrl)
-                        : const AssetImage("assets/default_profile.jpg")
-                            as ImageProvider,
+              // Profile Picture with Edit Button
+              Stack(
+                children: [
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFF4CAF50),
+                        width: 3,
+                      ),
+                    ),
+                    child: ClipOval(
+                      child: organiserPhotoUrl.isNotEmpty
+                          ? Image.network(
+                              organiserPhotoUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Image.asset(
+                                    'assets/default_profile.jpg',
+                                    fit: BoxFit.cover,
+                                  ),
+                            )
+                          : Image.asset(
+                              'assets/default_profile.jpg',
+                              fit: BoxFit.cover,
+                            ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: isUploadingImage ? null : _pickAndUploadImage,
+                      child: Container(
+                        width: 30,
+                        height: 30,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF4CAF50),
+                          shape: BoxShape.circle,
+                        ),
+                        child: isUploadingImage
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.camera_alt,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
               Text(
@@ -156,18 +272,6 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
                       sectionTitle("Account Controls"),
                       const SizedBox(height: 10),
 
-                      ElevatedButton(
-                        onPressed: () {
-                          // Navigate to edit organiser profile
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text("Edit Profile"),
-                      ),
-
-                      const SizedBox(height: 10), // <-- same height
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
