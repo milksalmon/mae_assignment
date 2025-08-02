@@ -111,7 +111,8 @@ class _SavedTabState extends State<_SavedTab> {
                 (data['media'] as List?)?.map((m) => m.toString()).toList() ??
                 [],
             'description': data['description'] ?? '',
-            'location': data['location'],
+            'location': city,
+            'geoPoint': data['location'],
           });
         }
       }
@@ -162,6 +163,7 @@ class _SavedTabState extends State<_SavedTab> {
                     media: event['media'],
                     description: event['description'],
                     location: event['location'],
+                    geoPoint: event['geoPoint'],
                     onSaveTap: () {
                       // RE FETCHING ON UNSAVE
                       FirebaseFirestore.instance
@@ -613,6 +615,7 @@ class _HomeTabState extends State<_HomeTab> {
               (data['media'] as List?)?.map((m) => m.toString()).toList() ?? [],
           'description': data['description'] ?? '',
           'location': city,
+          'geoPoint': data['location'],
         });
       }
 
@@ -701,6 +704,7 @@ class _HomeTabState extends State<_HomeTab> {
                           media: event['media'],
                           description: event['description'],
                           location: event['location'],
+                          geoPoint: event['geoPoint'],
                           onSaveTap: () => toggleSaveEvent(event['eventId']),
                         );
                       },
@@ -723,6 +727,7 @@ class EventCard extends StatelessWidget {
   final List<String> media;
   final String description;
   final VoidCallback onSaveTap;
+  final GeoPoint geoPoint;
 
   const EventCard({
     required this.imageUrl,
@@ -735,6 +740,7 @@ class EventCard extends StatelessWidget {
     required this.description,
     required this.onSaveTap,
     required this.location,
+    required this.geoPoint,
     Key? key,
   }) : super(key: key);
 
@@ -757,6 +763,8 @@ class EventCard extends StatelessWidget {
                   date: date,
                   media: media,
                   description: description,
+                  locationName: location, // PASS LOCATION
+                  geoPoint: geoPoint,
                 ),
           ),
         );

@@ -1,9 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
+import 'package:intl/intl.dart';
 
 class EventPage extends StatelessWidget {
   final String eventId;
@@ -12,7 +16,8 @@ class EventPage extends StatelessWidget {
   final String organiser;
   final String tags;
   final String date;
-  // final String location;
+  final GeoPoint geoPoint;
+  final String locationName;
   final List<String> media;
   final String description;
 
@@ -24,7 +29,8 @@ class EventPage extends StatelessWidget {
     required this.organiser,
     required this.tags,
     required this.date,
-    // required this.location,
+    required this.geoPoint,
+    required this.locationName,
     required this.media,
     required this.description,
   }) : super(key: key);
@@ -220,6 +226,22 @@ class EventPage extends StatelessWidget {
   }
 
   Widget _buildDateTimeSection() {
+    // TO MATCH THE LOGIC OF THE TIME OF EVENT EITHER ON-GOING OR NOT
+    DateTime? parsedDate;
+    try {
+      parsedDate = DateFormat('yyyy-M-dd HH:mm').parse(date);
+    } catch (e) {
+      parsedDate = null;
+    }
+
+    String eventStatus;
+    if (parsedDate != null) {
+      eventStatus =
+          parsedDate.isAfter(DateTime.now()) ? 'Coming Soon' : 'On-Going';
+    } else {
+      eventStatus = 'Unknown';
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -244,7 +266,7 @@ class EventPage extends StatelessWidget {
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text('Coming Soon', style: TextStyle(fontSize: 12)),
+              child: Text(eventStatus, style: const TextStyle(fontSize: 12)),
             ),
           ],
         ),
@@ -253,6 +275,8 @@ class EventPage extends StatelessWidget {
   }
 
   Widget _buildLocationSection() {
+    final LatLng latLng = LatLng(geoPoint.latitude, geoPoint.longitude);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -267,18 +291,60 @@ class EventPage extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        // Text(location),
-        const SizedBox(height: 12),
-        // Placeholder for map
-        Container(
+        // GOOGLE MAPS EMBEDDED VIEW
+        SizedBox(
           height: 200,
           width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
+          child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
+            child: GoogleMap(
+              initialCameraPosition: CameraPosition(target: latLng, zoom: 15),
+              markers: {
+                Marker(
+                  markerId: const MarkerId("event_location"),
+                  position: latLng,
+                  infoWindow: InfoWindow(title: locationName),
+                ),
+              },
+              zoomControlsEnabled: false,
+              myLocationButtonEnabled: false,
+              gestureRecognizers: {
+                Factory<OneSequenceGestureRecognizer>(
+                  () => EagerGestureRecognizer(),
+                ),
+              },
+            ),
           ),
-          child: const Center(
-            child: Text('Map View (Integrate with Google Maps)'),
+        ),
+        const SizedBox(height: 12),
+
+        // TO OPEN GOOGLE MAPS
+        GestureDetector(
+          onTap: () async {
+            final googleMapsUrl = Uri.parse(
+              'https://www.google.com/maps/dir/?api=1&destination=${latLng.latitude},${latLng.longitude}',
+            );
+            if (await canLaunchUrl(googleMapsUrl)) {
+              await launchUrl(
+                googleMapsUrl,
+                mode: LaunchMode.externalApplication,
+              );
+            } else {
+              throw 'Could not launch Google Maps';
+            }
+          },
+          child: Row(
+            children: const [
+              Icon(Icons.map, color: Colors.blue),
+              SizedBox(width: 8),
+              Text(
+                'Open in Google Maps',
+                style: TextStyle(
+                  color: Colors.blue,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ],
           ),
         ),
       ],
