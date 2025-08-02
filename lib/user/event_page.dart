@@ -149,6 +149,37 @@ class _EventPageState extends State<EventPage> {
           .collection('feedback')
           .add(feedbackData);
 
+      // INCREMENT THE NUMBER
+      final organiserSnapshot =
+          await FirebaseFirestore.instance
+              .collection('organisers')
+              .where('organizationName', isEqualTo: widget.organiser)
+              .limit(1)
+              .get();
+
+      if (organiserSnapshot.docs.isNotEmpty) {
+        final organiserId = organiserSnapshot.docs.first.id;
+        final ratingDocRef = FirebaseFirestore.instance
+            .collection('organisers')
+            .doc(organiserId)
+            .collection('rating')
+            .doc('summary');
+
+        final ratingKey = _selectedRating;
+
+        await FirebaseFirestore.instance.runTransaction((transaction) async {
+          final snapshot = await transaction.get(ratingDocRef);
+
+          if (snapshot.exists) {
+            final data = snapshot.data()!;
+            final currentCount = (data[ratingKey] ?? 0) as int;
+            transaction.update(ratingDocRef, {ratingKey: currentCount + 1});
+          } else {
+            transaction.set(ratingDocRef, {ratingKey: 1});
+          }
+        });
+      }
+
       _feedbackController.clear();
 
       ScaffoldMessenger.of(context).showSnackBar(
