@@ -373,7 +373,6 @@ class _EventPageState extends State<EventPage> {
           ),
         ),
         ElevatedButton(
-          //TODO: Onpres
           onPressed: () {},
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF4CAF50),

@@ -1,4 +1,3 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -286,7 +285,6 @@ class _UploadEventFormState extends State<UploadEventForm> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    // TODO: Save to Firebase
                     print("Saved location: $_selectedLocation");
                     ScaffoldMessenger.of(
                       context,

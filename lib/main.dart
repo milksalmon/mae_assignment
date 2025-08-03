@@ -10,17 +10,13 @@ import 'package:mae_assignment/organiser/orgDashboard.dart';
 import 'package:provider/provider.dart';
 import 'package:mae_assignment/organiser/orgRegistration.dart';
 import 'firebase_options.dart';
-import 'package:flutter/services.dart';
 
 // screens
 import 'user/userDashboard.dart';
 import 'auth/login.dart';
 import 'auth/create_account.dart';
 import 'admin/admin_dashboard.dart';
-import 'user/event_page.dart';
 import 'admin/account_management.dart';
-import 'organiser/org_edit_prof.dart';
-// import 'organiser/orgDashboard.dart';
 
 // Providers
 import 'providers/auth_provider.dart';

@@ -3,14 +3,10 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart' show canLaunchUrl, launchUrl;
 import 'package:url_launcher/url_launcher_string.dart';
-import '../providers/auth_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
 
 class OrganizerAccountManagement extends StatefulWidget {
   const OrganizerAccountManagement({super.key});
