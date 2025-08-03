@@ -56,7 +56,7 @@ class _CreateAccountState extends State<CreateAccount> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Account created! Please check your email to verify your account.',
+              'Account created!',
             ),
           ),
         );

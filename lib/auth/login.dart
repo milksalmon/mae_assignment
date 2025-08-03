@@ -220,7 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         '/adminDashboard',
                       );
                     } else if (role == 'user') {
-                      Navigator.pushReplacementNamed(context, '/userDashboard');
+                      Navigator.pushReplacementNamed(context, '/userDashboard');  
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(

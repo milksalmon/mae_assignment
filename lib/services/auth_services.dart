@@ -9,6 +9,9 @@ class AuthService {
   Future<UserCredential?> signInWithGoogle() async {
     print('Start google sign in');
     try {
+      // Sign out first to force account selection
+      await GoogleSignIn().signOut();
+      
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) {
         print('Google sign in aborted');
