@@ -347,14 +347,47 @@ class _EventPageState extends State<EventPage> {
   Widget _buildFollowSection() {
     return Row(
       children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.person, color: Colors.grey),
+        FutureBuilder<QuerySnapshot>(
+          future: FirebaseFirestore.instance
+              .collection('organisers')
+              .where('organizationName', isEqualTo: widget.organiser)
+              .limit(1)
+              .get(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.person, color: Colors.grey),
+              );
+            }
+
+            if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+              final organiserData = snapshot.data!.docs.first.data() as Map<String, dynamic>;
+              final imageUrl = organiserData['profileImageUrl'];
+              
+              if (imageUrl != null && imageUrl.isNotEmpty) {
+                return CircleAvatar(
+                  radius: 20,
+                  backgroundImage: NetworkImage(imageUrl),
+                );
+              }
+            }
+            
+            return Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.person, color: Colors.grey),
+            );
+          },
         ),
         const SizedBox(width: 12),
         Expanded(
