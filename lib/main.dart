@@ -25,19 +25,32 @@ import 'admin/account_management.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
 
+// Services
+import 'services/notification_service.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize FCM notifications
+  await NotificationService.initialize();
+  
+  // Clean up expired reminders
+  await NotificationService.cleanupExpiredReminders();
 
   final notificationSettings = await FirebaseMessaging.instance
       .requestPermission(provisional: true);
 
   try {
-
     final apnsToken = await FirebaseMessaging.instance.getToken();
     if (apnsToken != null) {
-
       print('FCM Token is:' + apnsToken);
+      
+      // Store FCM token if user is already logged in
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await NotificationService.ensureFCMTokenStored();
+      }
     }
   } catch (e) {
     print('Error fetching FCM token: $e');

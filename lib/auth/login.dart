@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mae_assignment/services/auth_services.dart';
+import 'package:mae_assignment/services/notification_service.dart';
 import 'create_account.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -27,7 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Image.asset(
-              'assets/LoginJambu.png', // replace with your image path
+              'assets/login_jambu.png', // replace with your image path
               height: 120,
             ),
 
@@ -120,6 +121,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           );
                       final uid = UserCredential.user!.uid;
 
+                      // Store FCM token for push notifications
+                      await NotificationService.ensureFCMTokenStored();
+
                       //STEP 2: GET ROLE FROM FIRESTORE
                       final userDoc =
                           await firestore.collection('users').doc(uid).get();
@@ -195,6 +199,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   UserCredential? user = await AuthService().signInWithGoogle();
                   if (user != null) {
                     final uid = user.user!.uid;
+
+                    // Store FCM token for push notifications
+                    await NotificationService.ensureFCMTokenStored();
 
                     final doc =
                         await FirebaseFirestore.instance

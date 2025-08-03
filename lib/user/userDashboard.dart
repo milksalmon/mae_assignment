@@ -11,6 +11,7 @@ import 'package:intl/intl.dart';
 import 'event_page.dart';
 import 'edit_profile.dart';
 import 'package:geocoding/geocoding.dart';
+import '../services/notification_service.dart';
 
 class UserDashboard extends StatefulWidget {
   const UserDashboard({super.key});
@@ -213,12 +214,6 @@ class _SavedTabState extends State<_SavedTab> {
 class _ReminderTabState extends State<_ReminderTab> {
   @override
   Widget build(BuildContext context) {
-    // Replace with your actual reminder data
-    final reminders = [
-      {'title': 'Expo iFood', 'date': 'Fri, 11th July, 2:30pm'},
-      {'title': 'Coffee Fest', 'date': 'Sat, 12th July, 10:00am'},
-    ];
-
     return Column(
       children: [
         const SizedBox(height: 20),
@@ -237,23 +232,106 @@ class _ReminderTabState extends State<_ReminderTab> {
           ),
         ),
         Expanded(
-          child: ListView.builder(
-            itemCount: reminders.length,
-            itemBuilder: (context, index) {
-              final reminder = reminders[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                child: ListTile(
-                  leading: Icon(Icons.event_note, color: Colors.green),
-                  title: Text(reminder['title']!),
-                  subtitle: Text(reminder['date']!),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () {
-                      // Remove reminder logic
-                    },
+          child: FutureBuilder<List<Map<String, dynamic>>>(
+            future: NotificationService.getUserReminders(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.notifications_none, size: 60, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No active reminders',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 18,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Save events to automatically get reminders 3 days before they start!',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
-                ),
+                );
+              }
+
+              final reminders = snapshot.data!;
+              return ListView.builder(
+                itemCount: reminders.length,
+                itemBuilder: (context, index) {
+                  final reminder = reminders[index];
+                  final eventDate = reminder['eventDate'] as DateTime?;
+                  final reminderTime = reminder['reminderTime'] as DateTime?;
+                  
+                  String formattedEventDate = 'Unknown date';
+                  String formattedReminderTime = 'Unknown time';
+                  
+                  if (eventDate != null) {
+                    formattedEventDate = DateFormat('EEE, MMM dd, yyyy \'at\' h:mm a').format(eventDate);
+                  }
+                  
+                  if (reminderTime != null) {
+                    formattedReminderTime = DateFormat('MMM dd, yyyy \'at\' h:mm a').format(reminderTime);
+                  }
+
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                    child: ListTile(
+                      leading: Icon(Icons.event_note, color: Colors.orange),
+                      title: Text(
+                        reminder['eventTitle'] ?? 'Unknown Event',
+                        style: GoogleFonts.montserrat(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('By: ${reminder['organiserName'] ?? 'Unknown Organiser'}'),
+                          Text('Event: $formattedEventDate'),
+                          Text('Reminder: $formattedReminderTime', 
+                            style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.w500)),
+                        ],
+                      ),
+                      isThreeLine: true,
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete, color: Colors.red),
+                        onPressed: () async {
+                          // Remove the reminder
+                          await NotificationService.cancelEventReminder(reminder['eventId']);
+                          
+                          // Also unsave the event
+                          final user = FirebaseAuth.instance.currentUser;
+                          if (user != null) {
+                            await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(user.uid)
+                                .collection('savedEvents')
+                                .doc(reminder['eventId'])
+                                .delete();
+                          }
+                          
+                          setState(() {
+                            // Refresh the list
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Event unsaved and reminder removed')),
+                          );
+                        },
+                      ),
+                    ),
+                  );
+                },
               );
             },
           ),
@@ -290,19 +368,28 @@ class _AccountTabState extends State<_AccountTab> {
             ),
             TextButton(
               onPressed: () async {
-                Navigator.of(context).pop(); // Close the dialog first
+                Navigator.of(context).pop();
                 try {
-                  await FirebaseAuth.instance.signOut();
-                  Provider.of<AppAuthProvider>(context, listen: false).logout();
-                  // Reset theme to light mode on logout
-                  Provider.of<ThemeProvider>(
-                    context,
-                    listen: false,
-                  ).resetToLightTheme();
-                  Navigator.pushReplacementNamed(context, '/login');
+                    // clear FCM token from Firestore
+                    // sign out
+                    await FirebaseAuth.instance.signOut();
+                    Provider.of<AppAuthProvider>(context, listen: false).logout();
+                    // reset theme to light mode on logout
+                    Provider.of<ThemeProvider>(
+                      context,
+                      listen: false,
+                    ).resetToLightTheme();
+                    await NotificationService.clearFCMToken();
+                    
+
+                    
+                    // navigate to login
+                    Navigator.of(context).pushReplacementNamed('/login');
+                  
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("You are logged out")),
                   );
+                  
                 } catch (e) {
                   print('Log out failed, Error: $e');
                   ScaffoldMessenger.of(
@@ -426,7 +513,7 @@ class _AccountTabState extends State<_AccountTab> {
                   _refreshProfile();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: const Color(0xFF4CAF50),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -999,6 +1086,78 @@ class _EventCardState extends State<EventCard> {
     }
   }
 
+  Future<void> _handleReminderWithSave(bool isSaving) async {
+    print('DEBUG: _handleReminderWithSave called with isSaving: $isSaving');
+    
+    // Check if widget is still mounted before proceeding
+    if (!mounted) return;
+    
+    if (isSaving) {
+      // When saving an event, also set a reminder
+      DateTime? eventStartDate;
+      try {
+        eventStartDate = DateFormat('yyyy-M-dd HH:mm').parse(widget.date);
+        print('DEBUG: Parsed event date: $eventStartDate');
+        print('DEBUG: Current time: ${DateTime.now()}');
+        print('DEBUG: Event date string: ${widget.date}');
+      } catch (e) {
+        print('DEBUG: Date parsing failed: $e');
+        print('DEBUG: Event date string was: ${widget.date}');
+        // If date parsing fails, don't set reminder but still allow saving
+        return;
+      }
+
+      // Check if event is more than 3 days away
+      final daysUntilEvent = eventStartDate.difference(DateTime.now()).inDays;
+      final hoursUntilEvent = eventStartDate.difference(DateTime.now()).inHours;
+      final totalDuration = eventStartDate.difference(DateTime.now());
+      print('DEBUG: Days until event: $daysUntilEvent');
+      print('DEBUG: Hours until event: $hoursUntilEvent');
+      print('DEBUG: Total duration: $totalDuration');
+      
+      // Calculate reminder time
+      final reminderTime = eventStartDate.subtract(const Duration(days: 3));
+      print('DEBUG: Reminder would be at: $reminderTime');
+      print('DEBUG: Is reminder time in future? ${reminderTime.isAfter(DateTime.now())}');
+      
+      if (daysUntilEvent >= 3) {
+        print('DEBUG: Scheduling reminder for event: ${widget.title}');
+        await NotificationService.scheduleEventReminder(
+          eventId: widget.eventId,
+          eventTitle: widget.title,
+          organiserName: widget.organiser,
+          eventStartDate: eventStartDate,
+        );
+        
+        // Check if widget is still mounted before showing snackbar
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Event saved with reminder set for 3 days before!')),
+          );
+        }
+      } else {
+        print('DEBUG: Event is less than 3 days away, no reminder set');
+        // Check if widget is still mounted before showing snackbar
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Event saved! (No reminder - event is less than 3 days away)')),
+          );
+        }
+      }
+    } else {
+      print('DEBUG: Unsaving event and removing reminder');
+      // When unsaving an event, also remove the reminder
+      await NotificationService.cancelEventReminder(widget.eventId);
+      
+      // Check if widget is still mounted before showing snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Event unsaved and reminder removed')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final tagList = widget.tags.split(',').map((tag) => tag.trim()).toList();
@@ -1126,10 +1285,16 @@ class _EventCardState extends State<EventCard> {
                     ),
                     onPressed: () {
                       widget.onSaveTap();
+                      // Store the new state before toggling
+                      final newSavedState = !_isSaved;
+                      
                       // Toggle the saved state immediately for better UX
                       setState(() {
-                        _isSaved = !_isSaved;
+                        _isSaved = newSavedState;
                       });
+                      
+                      // Handle reminder when saving/unsaving - use the new state
+                      _handleReminderWithSave(newSavedState);
                     },
                     color: Colors.pink,
                     iconSize: 28,
