@@ -162,11 +162,6 @@ class _OrganiserDashboardState extends State<OrganiserDashboard> {
           ? pendingApprovalWidget()
           : accountSuspended(),
 
-      organiserStatus.toLowerCase() == 'suspend'
-          ? accountSuspended()
-          : Center(child: Text('Notification')),
-
-      // Center(child: Text("Notification")),
       OrganiserAccountTab(
         swipeNavigationEnabled: true,
         onSwipeNavigationChanged: (value) {
@@ -211,11 +206,6 @@ class _OrganiserDashboardState extends State<OrganiserDashboard> {
             icon: Icon(Icons.event_outlined),
             selectedIcon: Icon(Icons.event),
             label: "Your Events",
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.notifications_outlined),
-            selectedIcon: Icon(Icons.notifications),
-            label: "Notifications",
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
