@@ -19,6 +19,7 @@ import 'auth/create_account.dart';
 import 'admin/admin_dashboard.dart';
 import 'user/event_page.dart';
 import 'admin/account_management.dart';
+import 'organiser/org_edit_prof.dart';
 // import 'organiser/orgDashboard.dart';
 
 // Providers
@@ -26,6 +27,10 @@ import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
 
 Future<void> main() async {
+  await startApp();
+}
+
+Future<void> startApp() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
@@ -33,10 +38,8 @@ Future<void> main() async {
       .requestPermission(provisional: true);
 
   try {
-
     final apnsToken = await FirebaseMessaging.instance.getToken();
     if (apnsToken != null) {
-
       print('FCM Token is:' + apnsToken);
     }
   } catch (e) {
@@ -44,12 +47,8 @@ Future<void> main() async {
   }
 
   FirebaseMessaging.instance.onTokenRefresh
-      .listen((fcmToken) {
-
-      })
-      .onError((err) {
-
-      });
+      .listen((fcmToken) {})
+      .onError((err) {});
 
   await FirebaseMessaging.instance.setAutoInitEnabled(true);
 
@@ -97,6 +96,21 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// FCM TOKEN METHOD
+// Future<void> _saveFcmToken(String uid) async {
+//   try {
+//     final fcmToken = await FirebaseMessaging.instance.getToken();
+//     if (fcmToken != null) {
+//       await FirebaseFirestore.instance.collection('organisers').doc(uid).update(
+//         {'fcmToken': fcmToken},
+//       );
+//       print('FCM token saved for organiser: $fcmToken');
+//     }
+//   } catch (e) {
+//     print('Error saving FCM token: $e');
+//   }
+// }
+
 class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -126,6 +140,7 @@ class AuthGate extends StatelessWidget {
           } else if (role == 'user') {
             return const UserDashboard();
           } else if (role == 'organiser') {
+            // _saveFcmToken(user.uid);
             return const OrganiserDashboard();
           } else {
             return const LoginScreen();

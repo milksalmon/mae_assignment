@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
+import 'package:mae_assignment/organiser/org_edit_prof.dart';
 
 //your mergin ah??? accept this
 class OrganiserAccountTab extends StatefulWidget {
@@ -31,7 +32,7 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
   bool isLoading = true;
   bool isUploadingImage = false;
   String? selectedReason;
-  
+
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -45,7 +46,11 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         final uid = user.uid;
-        final doc = await FirebaseFirestore.instance.collection('organisers').doc(uid).get();
+        final doc =
+            await FirebaseFirestore.instance
+                .collection('organisers')
+                .doc(uid)
+                .get();
 
         if (doc.exists) {
           final data = doc.data()!;
@@ -76,7 +81,7 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
         maxHeight: 512,
         imageQuality: 75,
       );
-      
+
       if (image != null) {
         setState(() {
           isUploadingImage = true;
@@ -89,7 +94,7 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
               .ref()
               .child('organiser_profile_images')
               .child('${user.uid}.jpg');
-          
+
           await ref.putFile(File(image.path));
           final downloadUrl = await ref.getDownloadURL();
 
@@ -98,9 +103,9 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
               .collection('organisers')
               .doc(user.uid)
               .update({
-            'profileImageUrl': downloadUrl,
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
+                'profileImageUrl': downloadUrl,
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
 
           // Update local state
           setState(() {
@@ -109,7 +114,9 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profile picture updated successfully')),
+            const SnackBar(
+              content: Text('Profile picture updated successfully'),
+            ),
           );
         }
       }
@@ -148,20 +155,21 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
                       ),
                     ),
                     child: ClipOval(
-                      child: organiserPhotoUrl.isNotEmpty
-                          ? Image.network(
-                              organiserPhotoUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Image.asset(
-                                    'assets/default_profile.jpg',
-                                    fit: BoxFit.cover,
-                                  ),
-                            )
-                          : Image.asset(
-                              'assets/default_profile.jpg',
-                              fit: BoxFit.cover,
-                            ),
+                      child:
+                          organiserPhotoUrl.isNotEmpty
+                              ? Image.network(
+                                organiserPhotoUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder:
+                                    (context, error, stackTrace) => Image.asset(
+                                      'assets/default_profile.jpg',
+                                      fit: BoxFit.cover,
+                                    ),
+                              )
+                              : Image.asset(
+                                'assets/default_profile.jpg',
+                                fit: BoxFit.cover,
+                              ),
                     ),
                   ),
                   Positioned(
@@ -176,20 +184,21 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
                           color: Color(0xFF4CAF50),
                           shape: BoxShape.circle,
                         ),
-                        child: isUploadingImage
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
+                        child:
+                            isUploadingImage
+                                ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                                : const Icon(
+                                  Icons.camera_alt,
                                   color: Colors.white,
-                                  strokeWidth: 2,
+                                  size: 16,
                                 ),
-                              )
-                            : const Icon(
-                                Icons.camera_alt,
-                                color: Colors.white,
-                                size: 16,
-                              ),
                       ),
                     ),
                   ),
@@ -311,6 +320,30 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
                       ),
 
                       const SizedBox(height: 10), // <-- consistent spacing
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () {
+                          final user = FirebaseAuth.instance.currentUser;
+                          if (user != null && organisationName.isNotEmpty) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => OrganiserProfileEdit(
+                                      organiserId: user.uid,
+                                      organiserName: organisationName,
+                                    ),
+                              ),
+                            );
+                          }
+                        },
+                        child: const Text('Add Attachments'),
+                      ),
+                      const SizedBox(height: 10),
+
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.black,
@@ -450,42 +483,68 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
                                                   labelText: 'Password',
                                                   errorText: errorText,
                                                 ),
-                                                onChanged: (value) => input = value,
+                                                onChanged:
+                                                    (value) => input = value,
                                                 validator: (value) {
-                                                  if (value == null || value.isEmpty) {
+                                                  if (value == null ||
+                                                      value.isEmpty) {
                                                     return 'Please enter your password';
                                                   }
                                                   return null;
                                                 },
                                               ),
-                                              if (isLoading) CircularProgressIndicator(),
+                                              if (isLoading)
+                                                CircularProgressIndicator(),
                                             ],
                                           ),
                                         ),
                                         actions: [
                                           TextButton(
-                                            onPressed: () => Navigator.pop(context, null),
+                                            onPressed:
+                                                () => Navigator.pop(
+                                                  context,
+                                                  null,
+                                                ),
                                             child: Text('Cancel'),
                                           ),
                                           TextButton(
                                             onPressed: () async {
-                                              if (_formKey.currentState!.validate()) {
-                                                setState(() => isLoading = true);
-                                                final user = FirebaseAuth.instance.currentUser;
+                                              if (_formKey.currentState!
+                                                  .validate()) {
+                                                setState(
+                                                  () => isLoading = true,
+                                                );
+                                                final user =
+                                                    FirebaseAuth
+                                                        .instance
+                                                        .currentUser;
                                                 try {
-                                                  final credential = EmailAuthProvider.credential(
-                                                    email: user!.email!,
-                                                    password: input,
+                                                  final credential =
+                                                      EmailAuthProvider.credential(
+                                                        email: user!.email!,
+                                                        password: input,
+                                                      );
+                                                  await user
+                                                      .reauthenticateWithCredential(
+                                                        credential,
+                                                      );
+                                                  setState(
+                                                    () => isLoading = false,
                                                   );
-                                                  await user.reauthenticateWithCredential(credential);
-                                                  setState(() => isLoading = false);
-                                                  Navigator.pop(context, input); // Only pop if correct
-                                                } on FirebaseAuthException catch (e) {
+                                                  Navigator.pop(
+                                                    context,
+                                                    input,
+                                                  ); // Only pop if correct
+                                                } on FirebaseAuthException catch (
+                                                  e
+                                                ) {
                                                   setState(() {
                                                     isLoading = false;
-                                                    errorText = e.code == 'wrong-password'
-                                                      ? 'Incorrect password. Please try again.'
-                                                      : 'Re-authentication failed: ${e.message}';
+                                                    errorText =
+                                                        e.code ==
+                                                                'wrong-password'
+                                                            ? 'Incorrect password. Please try again.'
+                                                            : 'Re-authentication failed: ${e.message}';
                                                   });
                                                 }
                                               }
@@ -500,82 +559,102 @@ class _OrganiserAccountTabState extends State<OrganiserAccountTab> {
                               );
                               final user = FirebaseAuth.instance.currentUser;
 
-                            bool reauthSuccess = false;
-                            if (password != null && user?.email != null) {
-                              final credential = EmailAuthProvider.credential(
-                                email: user!.email!,
-                                password: password,
-                              );
-                              try {
-                                await user.reauthenticateWithCredential(credential);
-                                reauthSuccess = true;
-                              } on FirebaseAuthException catch (e) {
-                                if (e.code == 'wrong-password') {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Incorrect password. Please try again.')),
+                              bool reauthSuccess = false;
+                              if (password != null && user?.email != null) {
+                                final credential = EmailAuthProvider.credential(
+                                  email: user!.email!,
+                                  password: password,
+                                );
+                                try {
+                                  await user.reauthenticateWithCredential(
+                                    credential,
                                   );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Re-authentication failed: ${e.message}')),
-                                  );
-                                }
-                              }
-                            }
-                            if (reauthSuccess) {
-                              // Proceed with deletion logic
-
-                              try {
-
-                                final uid = user?.uid;
-
-                                if (uid != null) {
-                                  // Fetch organiser data from Firestore
-                                  final docSnapshot =
-                                      await FirebaseFirestore.instance
-                                          .collection('organisers')
-                                          .doc(uid)
-                                          .get();
-
-                                  final organiserData =
-                                      docSnapshot.data() ?? {};
-
-                                  // Save to deleted_accounts collection
-                                  await FirebaseFirestore.instance
-                                    .collection('deleted_accounts')
-                                    .doc(user?.uid)
-                                    .set({
-                                  'email': user?.email ?? '',
-                                  'organizationName': organiserData['organizationName'] ?? '',
-                                  'phoneNumber': organiserData['phoneNumber'] ?? '',
-                                  'picName': organiserData['picName'] ?? '',
-                                  'reason': selectedReason ?? '',
-                                  'status': 'deleted',
-                                  'deletedAt': FieldValue.serverTimestamp(),
-                                });
-
-                                  await FirebaseFirestore.instance.collection('organisers').doc(user?.uid).delete();
-
-                                  // delete user account
-                                  await user?.delete();
-
-                                  // Navigate to login page
-                                  if (context.mounted) {
-                                    Navigator.of(
-                                      context,
-                                    ).pushNamedAndRemoveUntil(
-                                      '/login',
-                                      (r) => false,
+                                  reauthSuccess = true;
+                                } on FirebaseAuthException catch (e) {
+                                  if (e.code == 'wrong-password') {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Incorrect password. Please try again.',
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Re-authentication failed: ${e.message}',
+                                        ),
+                                      ),
                                     );
                                   }
                                 }
-                              } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text("Error deleting account: $e"),
-                                  ),
-                                );
                               }
-                            }
+                              if (reauthSuccess) {
+                                // Proceed with deletion logic
+
+                                try {
+                                  final uid = user?.uid;
+
+                                  if (uid != null) {
+                                    // Fetch organiser data from Firestore
+                                    final docSnapshot =
+                                        await FirebaseFirestore.instance
+                                            .collection('organisers')
+                                            .doc(uid)
+                                            .get();
+
+                                    final organiserData =
+                                        docSnapshot.data() ?? {};
+
+                                    // Save to deleted_accounts collection
+                                    await FirebaseFirestore.instance
+                                        .collection('deleted_accounts')
+                                        .doc(user?.uid)
+                                        .set({
+                                          'email': user?.email ?? '',
+                                          'organizationName':
+                                              organiserData['organizationName'] ??
+                                              '',
+                                          'phoneNumber':
+                                              organiserData['phoneNumber'] ??
+                                              '',
+                                          'picName':
+                                              organiserData['picName'] ?? '',
+                                          'reason': selectedReason ?? '',
+                                          'status': 'deleted',
+                                          'deletedAt':
+                                              FieldValue.serverTimestamp(),
+                                        });
+
+                                    await FirebaseFirestore.instance
+                                        .collection('organisers')
+                                        .doc(user?.uid)
+                                        .delete();
+
+                                    // delete user account
+                                    await user?.delete();
+
+                                    // Navigate to login page
+                                    if (context.mounted) {
+                                      Navigator.of(
+                                        context,
+                                      ).pushNamedAndRemoveUntil(
+                                        '/login',
+                                        (r) => false,
+                                      );
+                                    }
+                                  }
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        "Error deleting account: $e",
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
                             }
                           }
                         },

@@ -158,8 +158,15 @@ class _OrganiserDashboardState extends State<OrganiserDashboard> {
               );
             },
           )
-          : pendingApprovalWidget(),
-      Center(child: Text("Notification")),
+          : organiserStatus.toLowerCase() == 'pending'
+          ? pendingApprovalWidget()
+          : accountSuspended(),
+
+      organiserStatus.toLowerCase() == 'suspend'
+          ? accountSuspended()
+          : Center(child: Text('Notification')),
+
+      // Center(child: Text("Notification")),
       OrganiserAccountTab(
         swipeNavigationEnabled: true,
         onSwipeNavigationChanged: (value) {
@@ -219,6 +226,43 @@ class _OrganiserDashboardState extends State<OrganiserDashboard> {
       ),
     );
   }
+}
+
+// LOGIC FOR ACCOUNT SUSPEND
+Widget accountSuspended() {
+  return Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.block, size: 60, color: Colors.red),
+          const SizedBox(height: 20),
+          Text(
+            'Account Suspended',
+            style: GoogleFonts.montserrat(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Your account has been suspended due to policy violation.',
+            style: GoogleFonts.montserrat(fontSize: 16, color: Colors.black54),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'For more information, please contact support.',
+            style: GoogleFonts.montserrat(fontSize: 16, color: Colors.black54),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 Widget pendingApprovalWidget() {

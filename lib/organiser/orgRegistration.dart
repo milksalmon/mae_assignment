@@ -49,6 +49,8 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
   }
 
   Future<void> _registerOrganiser() async {
+    final organiserName = _orgNameController.text.trim();
+
     if (_formKey.currentState!.validate()) {
       if (_permitFile == null || _ssmFile == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -62,17 +64,22 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
 
       try {
         // Create organiser account
-        UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
+        UserCredential userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+              email: _emailController.text.trim(),
+              password: _passwordController.text.trim(),
+            );
 
         final uid = userCredential.user?.uid;
         if (uid == null) throw Exception('User ID not found');
 
         // Upload files to Firebase Storage
-        final permitRef = FirebaseStorage.instance.ref().child('organisers/attachment/permit.${_permitFile!.path.split('.').last}');
-        final ssmRef = FirebaseStorage.instance.ref().child('organisers/attachment/ssm.${_ssmFile!.path.split('.').last}');
+        final permitRef = FirebaseStorage.instance.ref().child(
+          'organisers/$organiserName/attachment/permit.${_permitFile!.path.split('.').last}',
+        );
+        final ssmRef = FirebaseStorage.instance.ref().child(
+          'organisers/$organiserName/attachment/ssm.${_ssmFile!.path.split('.').last}',
+        );
 
         final permitUploadTask = permitRef.putFile(_permitFile!);
         final ssmUploadTask = ssmRef.putFile(_ssmFile!);
@@ -98,7 +105,7 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
         await FirebaseFirestore.instance.collection('users').doc(uid).set({
           'createdAt': FieldValue.serverTimestamp(),
           'name': _picNameController.text.trim(),
-          'email':  _emailController.text.trim(),
+          'email': _emailController.text.trim(),
           'role': 'organiser',
         });
 
@@ -106,7 +113,11 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
         await userCredential.user?.sendEmailVerification();
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account created! Please check your email to verify your account.')),
+          const SnackBar(
+            content: Text(
+              'Account created! Please check your email to verify your account.',
+            ),
+          ),
         );
 
         Navigator.pushReplacement(
@@ -118,9 +129,9 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
           SnackBar(content: Text(e.message ?? 'Registration failed')),
         );
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       }
     }
   }
