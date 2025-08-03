@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/services.dart';
 import 'package:mae_assignment/admin/manage_feedback.dart';
 import 'package:mae_assignment/admin/organiser_registration.dart';
 import 'package:mae_assignment/auth/forgot_password.dart';
@@ -32,6 +33,12 @@ Future<void> main() async {
 Future<void> startApp() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+    // Disable rotation - lock to portrait mode
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 
   // Initialize FCM notifications
   await NotificationService.initialize();
