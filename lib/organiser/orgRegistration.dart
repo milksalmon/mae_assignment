@@ -183,19 +183,48 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
           key: _formKey,
           child: ListView(
             children: [
-              _buildTextField('Organisation Name', _orgNameController),
-              const SizedBox(height: 12),
-              _buildTextField('PIC Name', _picNameController),
-              const SizedBox(height: 12),
-              _buildTextField('Phone Number', _phoneController),
-              const SizedBox(height: 12),
               _buildTextField(
-                'Email',
-                _emailController,
+                'Organisation Name',
+                _orgNameController,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
+                    return 'Enter your organisation name';
                   }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              _buildTextField(
+                'PIC Name',
+                _picNameController,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Enter the person in charge name';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              _buildTextField(
+                'Phone Number',
+                _phoneController,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Enter your phone number';
+                  } else if (!RegExp(r'^\d{10,11}$').hasMatch(value)) {
+                    return 'Enter a valid 10–11 digit number';
+                  }
+                  return null;
+                },
+              ),
+            const SizedBox(height: 12),
+            _buildTextField(
+              'Email',
+              _emailController,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter your email';
+                }
 
                   final emailRegex = RegExp(
                     r'^[\w-\.]+@([\w-]+\.)+(com|org|net|my|edu)$',
