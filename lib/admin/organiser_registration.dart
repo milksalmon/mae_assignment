@@ -125,7 +125,7 @@ class _OrganiserRegistration extends State<OrganiserRegistration> {
                                     context: context,
                                     company: item['organizationName'],
                                     name: item['picName'],
-                                    remarks: item['description'],
+                                    //remarks: item['description'],
                                     date: item['createdAt'],
                                     status: item['status'],
                                     attachments:
@@ -184,7 +184,7 @@ Widget buildRequestCard({
   required BuildContext context,
   required String company,
   required String name,
-  required String remarks,
+  //required String remarks,
   required String date,
   required String status, // TO ENABLE FILTERING CARD
   required List<String>? attachments, // FOR ATTACHING FILE
@@ -215,7 +215,7 @@ Widget buildRequestCard({
             'Remarks',
             style: TextStyle(decoration: TextDecoration.underline),
           ),
-          Text(remarks.isNotEmpty ? remarks : '-'),
+          //Text(remarks.isNotEmpty ? remarks : '-'),
           //const Text('Lorem Ipsum Dolor Sit Amet'),
           const SizedBox(height: 10),
           // FOR ATTACHMENT

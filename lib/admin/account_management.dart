@@ -159,7 +159,7 @@ class _OrganizerAccountManagementState
                             context: context,
                             company: org['organizationName'],
                             name: org['picName'],
-                            remarks: org['description'] ?? '',
+                            //remarks: org['description'] ?? '',
                             date: org['date'] ?? 'N/A',
                             status: org['status'],
                             attachments: List<String>.from(
@@ -282,7 +282,7 @@ class _OrganizerAccountManagementState
     required BuildContext context,
     required String company,
     required String name,
-    required String remarks,
+    //required String remarks,
     required String date,
     required String status,
     required List<String>? attachments,
@@ -359,7 +359,7 @@ class _OrganizerAccountManagementState
             const SizedBox(height: 12),
 
             // REMARKS
-            Text(remarks.isNotEmpty ? '* $remarks' : '-'),
+            //Text(remarks.isNotEmpty ? '* $remarks' : '-'),
             const SizedBox(height: 12),
 
             // ATTACHMENT SECTION (Only show if attachments exist)
