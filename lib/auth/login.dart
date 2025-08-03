@@ -221,6 +221,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       );
                     } else if (role == 'user') {
                       Navigator.pushReplacementNamed(context, '/userDashboard');  
+                    }  else if (role == 'organiser') {
+                      Navigator.pushReplacementNamed(context, '/orgDashboard');
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
