@@ -383,7 +383,7 @@ class _EventPageState extends State<EventPage> {
               borderRadius: BorderRadius.circular(20),
             ),
           ),
-          child: const Text('Follow This Event'),
+          child: const Text('Save This Event'),
         ),
       ],
     );

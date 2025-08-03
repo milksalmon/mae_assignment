@@ -161,7 +161,31 @@ class _SavedTabState extends State<_SavedTab> {
                 }
 
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No Saved Events'));
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.bookmark_border, size: 60, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No Saved Events',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 18,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Save events to keep track of them and get reminders!',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  );
                 }
 
                 final savedEvents = snapshot.data!;
@@ -486,18 +510,6 @@ class _AccountTabState extends State<_AccountTab> {
               const SizedBox(height: 4),
               Text(email, style: const TextStyle(color: Colors.grey)),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      "0 Following",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
@@ -991,32 +1003,60 @@ class _HomeTabState extends State<_HomeTab> {
           const SizedBox(height: 16),
           // Event list
           Expanded(
-            child:
-                _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : ListView.builder(
-                      itemCount: _filteredEvents.length,
-                      itemBuilder: (contet, index) {
-                        final event = _filteredEvents[index];
-                        return EventCard(
-                          imageUrl: event['image'],
-                          title: event['title'],
-                          organiser: event['organiser'],
-                          tags: event['tags'],
-                          date: event['date'],
-                          eventId: event['eventId'],
-                          media: event['media'],
-                          description: event['description'],
-                          location: event['location'],
-                          geoPoint: event['geoPoint'],
-                          wsLink: event['wsLink'],
-                          parking: event['parking'],
-                          endDate: event['endDate'],
-                          isOrganiser: false,
-                          onSaveTap: () => toggleSaveEvent(event['eventId']),
-                        );
-                      },
-                    ),
+  child:
+      _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _filteredEvents.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.event_busy, size: 60, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No Events Found',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 18,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _searchQuery.isNotEmpty || _selectedState != 'All States'
+                            ? 'Try adjusting your search or filter settings'
+                            : 'No events available at the moment',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                itemCount: _filteredEvents.length,
+                itemBuilder: (context, index) {
+                  final event = _filteredEvents[index];
+                  return EventCard(
+                    imageUrl: event['image'],
+                    title: event['title'],
+                    organiser: event['organiser'],
+                    tags: event['tags'],
+                    date: event['date'],
+                    eventId: event['eventId'],
+                    media: event['media'],
+                    description: event['description'],
+                    location: event['location'],
+                    geoPoint: event['geoPoint'],
+                    wsLink: event['wsLink'],
+                    parking: event['parking'],
+                    endDate: event['endDate'],
+                    isOrganiser: false,
+                    onSaveTap: () => toggleSaveEvent(event['eventId']),
+                  );
+                },
+              ),
           ),
         ],
       ),
