@@ -4,8 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
-import 'search_page.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'event_page.dart';
@@ -185,6 +183,7 @@ class _SavedTabState extends State<_SavedTab> {
                       wsLink: event['wsLink'],
                       parking: event['parking'],
                       endDate: event['endDate'],
+                      isOrganiser: false,
                       onSaveTap: () {
                         // RE FETCHING ON UNSAVE
                         FirebaseFirestore.instance
@@ -1013,6 +1012,7 @@ class _HomeTabState extends State<_HomeTab> {
                           wsLink: event['wsLink'],
                           parking: event['parking'],
                           endDate: event['endDate'],
+                          isOrganiser: false,
                           onSaveTap: () => toggleSaveEvent(event['eventId']),
                         );
                       },
@@ -1039,6 +1039,7 @@ class EventCard extends StatefulWidget {
   final String wsLink;
   final String parking;
   final DateTime? endDate;
+  final bool isOrganiser;
 
   const EventCard({
     required this.imageUrl,
@@ -1055,6 +1056,7 @@ class EventCard extends StatefulWidget {
     required this.wsLink,
     required this.parking,
     required this.endDate,
+    this.isOrganiser = false,
     Key? key,
   }) : super(key: key);
 
@@ -1185,6 +1187,7 @@ class _EventCardState extends State<EventCard> {
                   wsLink: widget.wsLink,
                   parking: widget.parking,
                   endDate: widget.endDate,
+                  isOrganiser: widget.isOrganiser,
                 ),
           ),
         );
@@ -1281,6 +1284,8 @@ class _EventCardState extends State<EventCard> {
                       ],
                     ),
                   ),
+                  // if user is not organiser, add this button
+                  if (!widget.isOrganiser) 
                   // Save button on the right side with dynamic icon
                   IconButton(
                     icon: Icon(

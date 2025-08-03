@@ -462,6 +462,7 @@ class OrganiserEventsWidget extends StatelessWidget {
                           geoPoint: event['geoPoint'],
                           wsLink: event['wsLink'],
                           parking: event['parking'],
+                          isOrganiser: true,
                           onSaveTap: () => onToggleSave(event['eventId']),
                         );
                       },

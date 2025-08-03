@@ -88,7 +88,7 @@ class _AdminDashboard extends State<AdminDashboard> {
                 Navigator.pushReplacementNamed(context, '/organiserRegister');
               },
               child: Text(
-                'Event Organizer Registration',
+                'Event Organiser Registration',
                 style: GoogleFonts.montserrat(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

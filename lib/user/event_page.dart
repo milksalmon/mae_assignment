@@ -1,8 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../providers/auth_provider.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/foundation.dart';
@@ -23,6 +21,7 @@ class EventPage extends StatefulWidget {
   final String wsLink;
   final String parking;
   final DateTime? endDate;
+  final bool isOrganiser;
 
   const EventPage({
     Key? key,
@@ -39,6 +38,7 @@ class EventPage extends StatefulWidget {
     required this.wsLink,
     required this.parking,
     required this.endDate,
+    this.isOrganiser = false,
   }) : super(key: key);
 
   @override
@@ -227,9 +227,11 @@ class _EventPageState extends State<EventPage> {
             _buildTitleSection(tagList),
             const SizedBox(height: 20),
 
-            // Follow button and group info
-            _buildFollowSection(),
-            const SizedBox(height: 20),
+            // Follow button and group info - Only show for regular users
+            if (!widget.isOrganiser) ...[
+              _buildFollowSection(),
+              const SizedBox(height: 20),
+            ],
 
             // Date & Time
             _buildDateTimeSection(),
@@ -246,9 +248,11 @@ class _EventPageState extends State<EventPage> {
             _buildDescriptionSection(),
             const SizedBox(height: 32),
 
-            // Vendor Chat Section
-            _buildVendorChatSection(context),
-            const SizedBox(height: 32),
+            // Vendor Chat Section - Only show for regular users
+            if (!widget.isOrganiser) ...[
+              _buildVendorChatSection(context),
+              const SizedBox(height: 32),
+            ],
 
             // Feedback Section
             _buildFeedbackSection(),

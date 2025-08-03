@@ -183,7 +183,7 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
           key: _formKey,
           child: ListView(
             children: [
-              _buildTextField('Organization Name', _orgNameController),
+              _buildTextField('Organisation Name', _orgNameController),
               const SizedBox(height: 12),
               _buildTextField('PIC Name', _picNameController),
               const SizedBox(height: 12),
