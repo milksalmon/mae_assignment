@@ -340,7 +340,15 @@ class _UploadEventFormState extends State<UploadEventForm> {
                   ),
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  validator: (value) => value!.isEmpty ? "Required" : null,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Required';
+                    }
+                    if (!RegExp(r'[0-9]{10}$').hasMatch(value)) {
+                      return 'Enter valid format: 0123456789';
+                    }
+                    return null;
+                  },
                 ),
                 SizedBox(height: 16),
                 Text("Add More Media (optional)"),
@@ -398,6 +406,17 @@ class _UploadEventFormState extends State<UploadEventForm> {
                                 'Current User:  ${FirebaseAuth.instance.currentUser}',
                               );
                               if (_formKey.currentState!.validate()) {
+                                if (_coverImage == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Please select a cover image before submitting.',
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+
                                 setState(() {
                                   _isUploading = true;
                                 });

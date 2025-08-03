@@ -69,9 +69,9 @@ class _OrganiserDashboardState extends State<OrganiserDashboard> {
     if (doc.exists) {
       setState(() {
         organiserStatus = doc['status'];
-        _organiserName = doc['organizationName'] ?? '';
+        _organiserName = (doc['organizationName'] ?? '').toString().trim();
       });
-      
+
       // Fetch events if approved
       if (organiserStatus.toLowerCase() == "approved") {
         _fetchOrganiserEvents();
@@ -81,15 +81,16 @@ class _OrganiserDashboardState extends State<OrganiserDashboard> {
 
   Future<void> _fetchOrganiserEvents() async {
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('event')
-          .where('orgName', isEqualTo: _organiserName)
-          .get();
-      
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('event')
+              .where('orgName', isEqualTo: _organiserName)
+              .get();
+
       List<Map<String, dynamic>> events = [];
       for (var doc in snapshot.docs) {
         final data = doc.data();
-        
+
         // CONVERT GEOLOCATION TO CITY NAME
         String city = 'Unknown';
         try {
@@ -102,21 +103,23 @@ class _OrganiserDashboardState extends State<OrganiserDashboard> {
           print('Failed to fetch city: $e');
           city = 'Unknown';
         }
-        
+
         events.add({
           'eventId': doc.id,
           'image': data['images'] ?? '',
           'title': data['eventName'] ?? '',
           'organiser': data['orgName'] ?? '',
           'tags': (data['tags'] as List?)?.join(',') ?? '',
-          'date': DateFormat('yyyy-M-dd HH:mm').format(
-            data['startDate']?.toDate().toLocal() ?? DateTime.now()
-          ),
-          'media': (data['media'] as List?)?.map((m) => m.toString()).toList() ?? [],
+          'date': DateFormat(
+            'yyyy-M-dd HH:mm',
+          ).format(data['startDate']?.toDate().toLocal() ?? DateTime.now()),
+          'media':
+              (data['media'] as List?)?.map((m) => m.toString()).toList() ?? [],
           'description': data['description'] ?? '',
           'location': city,
           'geoPoint': data['location'],
           'wsLink': data['wsLink'] ?? '',
+          'endDate': data['endDate']?.toDate(),
           'parking': data['parking'] ?? '',
         });
       }
@@ -125,6 +128,8 @@ class _OrganiserDashboardState extends State<OrganiserDashboard> {
         _organiserEvents = events;
         _isLoadingEvents = false;
       });
+
+      print('Total Events Fetched: ${snapshot.docs.length}');
     } catch (e) {
       print('Error fetching organiser events: $e');
       setState(() {
@@ -143,18 +148,25 @@ class _OrganiserDashboardState extends State<OrganiserDashboard> {
     final List<Widget> pages = [
       organiserStatus.toLowerCase() == "approved"
           ? OrganiserEventsWidget(
-              organiserEvents: _organiserEvents,
-              isLoadingEvents: _isLoadingEvents,
-              onToggleSave: toggleSaveEvent,
-              onUploadEventTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => UploadEventForm()),
-                );
-              },
-            )
-          : pendingApprovalWidget(),
-      Center(child: Text("Notification")),
+            organiserEvents: _organiserEvents,
+            isLoadingEvents: _isLoadingEvents,
+            onToggleSave: toggleSaveEvent,
+            onUploadEventTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => UploadEventForm()),
+              );
+            },
+          )
+          : organiserStatus.toLowerCase() == 'pending'
+          ? pendingApprovalWidget()
+          : accountSuspended(),
+
+      organiserStatus.toLowerCase() == 'suspend'
+          ? accountSuspended()
+          : Center(child: Text('Notification')),
+
+      // Center(child: Text("Notification")),
       OrganiserAccountTab(
         swipeNavigationEnabled: true,
         onSwipeNavigationChanged: (value) {
@@ -214,6 +226,43 @@ class _OrganiserDashboardState extends State<OrganiserDashboard> {
       ),
     );
   }
+}
+
+// LOGIC FOR ACCOUNT SUSPEND
+Widget accountSuspended() {
+  return Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.block, size: 60, color: Colors.red),
+          const SizedBox(height: 20),
+          Text(
+            'Account Suspended',
+            style: GoogleFonts.montserrat(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Your account has been suspended due to policy violation.',
+            style: GoogleFonts.montserrat(fontSize: 16, color: Colors.black54),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'For more information, please contact support.',
+            style: GoogleFonts.montserrat(fontSize: 16, color: Colors.black54),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 Widget pendingApprovalWidget() {
@@ -334,13 +383,16 @@ class OrganiserEventsWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Upload Event Button
           Center(
             child: GestureDetector(
               onTap: onUploadEventTap,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 24,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -371,58 +423,59 @@ class OrganiserEventsWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          
+
           // Events List
           Expanded(
-            child: isLoadingEvents
-                ? const Center(child: CircularProgressIndicator())
-                : organiserEvents.isEmpty
+            child:
+                isLoadingEvents
+                    ? const Center(child: CircularProgressIndicator())
+                    : organiserEvents.isEmpty
                     ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.event_note, size: 60, color: Colors.grey),
-                            const SizedBox(height: 16),
-                            Text(
-                              "No events uploaded yet",
-                              style: GoogleFonts.montserrat(
-                                fontSize: 18,
-                                color: Colors.grey,
-                              ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.event_note, size: 60, color: Colors.grey),
+                          const SizedBox(height: 16),
+                          Text(
+                            "No events uploaded yet",
+                            style: GoogleFonts.montserrat(
+                              fontSize: 18,
+                              color: Colors.grey,
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "Upload your first event to get started!",
-                              style: GoogleFonts.montserrat(
-                                fontSize: 14,
-                                color: Colors.grey,
-                              ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "Upload your first event to get started!",
+                            style: GoogleFonts.montserrat(
+                              fontSize: 14,
+                              color: Colors.grey,
                             ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: organiserEvents.length,
-                        itemBuilder: (context, index) {
-                          final event = organiserEvents[index];
-                          return EventCard(
-                            imageUrl: event['image'],
-                            title: event['title'],
-                            organiser: event['organiser'],
-                            tags: event['tags'],
-                            date: event['date'],
-                            endDate: event['endDate'],
-                            eventId: event['eventId'],
-                            media: event['media'],
-                            description: event['description'],
-                            location: event['location'],
-                            geoPoint: event['geoPoint'],
-                            wsLink: event['wsLink'],
-                            parking: event['parking'],
-                            onSaveTap: () => onToggleSave(event['eventId']),
-                          );
-                        },
+                          ),
+                        ],
                       ),
+                    )
+                    : ListView.builder(
+                      itemCount: organiserEvents.length,
+                      itemBuilder: (context, index) {
+                        final event = organiserEvents[index];
+                        return EventCard(
+                          imageUrl: event['image'],
+                          title: event['title'],
+                          organiser: event['organiser'],
+                          tags: event['tags'],
+                          date: event['date'],
+                          endDate: event['endDate'],
+                          eventId: event['eventId'],
+                          media: event['media'],
+                          description: event['description'],
+                          location: event['location'],
+                          geoPoint: event['geoPoint'],
+                          wsLink: event['wsLink'],
+                          parking: event['parking'],
+                          onSaveTap: () => onToggleSave(event['eventId']),
+                        );
+                      },
+                    ),
           ),
         ],
       ),
