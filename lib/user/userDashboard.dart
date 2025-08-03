@@ -71,6 +71,23 @@ Future<String> getCityFromGeoPoint(GeoPoint geoPoint) async {
 // CONVERT GEOLOCATION END
 
 class _SavedTabState extends State<_SavedTab> {
+  bool _isRefreshing = false;
+  
+  Future<void> _refreshSavedEvents() async {
+    if (_isRefreshing) return;
+    
+    setState(() {
+      _isRefreshing = true;
+    });
+    
+    // Add a small delay to show the refresh indicator
+    await Future.delayed(const Duration(milliseconds: 300));
+    
+    setState(() {
+      _isRefreshing = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     // FETCHING ACTAUL EVENT DATA
@@ -133,233 +150,286 @@ class _SavedTabState extends State<_SavedTab> {
       return savedEvents;
     }
 
-    return Column(
-      children: [
-        const SizedBox(height: 20),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Container(
-            margin: const EdgeInsets.only(left: 20),
-            child: Text(
-              "Saved Events",
-              style: GoogleFonts.montserrat(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFFFF2F67),
+    return RefreshIndicator(
+      onRefresh: _refreshSavedEvents,
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              margin: const EdgeInsets.only(left: 20),
+              child: Text(
+                "Saved Events",
+                style: GoogleFonts.montserrat(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFFFF2F67),
+                ),
               ),
             ),
           ),
-        ),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: fetchSavedEvents(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting && !_isRefreshing) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Container(
+                        height: MediaQuery.of(context).size.height * 0.6,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.bookmark_border, size: 60, color: Colors.grey),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No Saved Events',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 18,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Save events to keep track of them and get reminders!',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Pull down to refresh',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 12,
+                                  color: Colors.grey[400],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  final savedEvents = snapshot.data!;
+                  return ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: savedEvents.length,
+                    itemBuilder: (context, index) {
+                      final event = savedEvents[index];
+                      return EventCard(
+                        imageUrl: event['image'],
+                        title: event['title'],
+                        organiser: event['organiser'],
+                        tags: event['tags'],
+                        date: event['date'],
+                        eventId: event['eventId'],
+                        media: event['media'],
+                        description: event['description'],
+                        location: event['location'],
+                        geoPoint: event['geoPoint'],
+                        wsLink: event['wsLink'],
+                        parking: event['parking'],
+                        endDate: event['endDate'],
+                        isOrganiser: false,
+                        onSaveTap: () {
+                          // RE FETCHING ON UNSAVE
+                          FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(FirebaseAuth.instance.currentUser!.uid)
+                              .collection('savedEvents')
+                              .doc(event['eventId'])
+                              .delete()
+                              .then((_) {
+                                setState(() {
+                                  // RE-TRIGGERED FILTERED RESULTS
+                                });
+                              });
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReminderTabState extends State<_ReminderTab> {
+  bool _isRefreshing = false;
+  
+  Future<void> _refreshReminders() async {
+    if (_isRefreshing) return;
+    
+    setState(() {
+      _isRefreshing = true;
+    });
+    
+    // Add a small delay to show the refresh indicator
+    await Future.delayed(const Duration(milliseconds: 300));
+    
+    setState(() {
+      _isRefreshing = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: _refreshReminders,
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              margin: const EdgeInsets.only(left: 20),
+              child: Text(
+                "Reminders",
+                style: GoogleFonts.montserrat(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFFFF2F67),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: fetchSavedEvents(),
+              future: NotificationService.getUserReminders(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting && !_isRefreshing) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.bookmark_border, size: 60, color: Colors.grey),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No Saved Events',
-                          style: GoogleFonts.montserrat(
-                            fontSize: 18,
-                            color: Colors.grey,
-                          ),
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Container(
+                      height: MediaQuery.of(context).size.height * 0.6,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.notifications_none, size: 60, color: Colors.grey),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No active reminders',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 18,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Save events to automatically get reminders 3 days before they start!',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Pull down to refresh',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 12,
+                                color: Colors.grey[400],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Save events to keep track of them and get reminders!',
-                          style: GoogleFonts.montserrat(
-                            fontSize: 14,
-                            color: Colors.grey,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                      ),
                     ),
                   );
                 }
 
-                final savedEvents = snapshot.data!;
+                final reminders = snapshot.data!;
                 return ListView.builder(
-                  itemCount: savedEvents.length,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  itemCount: reminders.length,
                   itemBuilder: (context, index) {
-                    final event = savedEvents[index];
-                    return EventCard(
-                      imageUrl: event['image'],
-                      title: event['title'],
-                      organiser: event['organiser'],
-                      tags: event['tags'],
-                      date: event['date'],
-                      eventId: event['eventId'],
-                      media: event['media'],
-                      description: event['description'],
-                      location: event['location'],
-                      geoPoint: event['geoPoint'],
-                      wsLink: event['wsLink'],
-                      parking: event['parking'],
-                      endDate: event['endDate'],
-                      isOrganiser: false,
-                      onSaveTap: () {
-                        // RE FETCHING ON UNSAVE
-                        FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(FirebaseAuth.instance.currentUser!.uid)
-                            .collection('savedEvents')
-                            .doc(event['eventId'])
-                            .delete()
-                            .then((_) {
-                              setState(() {
-                                // RE-TRIGGERED FILTERED RESULTS
-                              });
+                    final reminder = reminders[index];
+                    final eventDate = reminder['eventDate'] as DateTime?;
+                    final reminderTime = reminder['reminderTime'] as DateTime?;
+                    
+                    String formattedEventDate = 'Unknown date';
+                    String formattedReminderTime = 'Unknown time';
+                    
+                    if (eventDate != null) {
+                      formattedEventDate = DateFormat('EEE, MMM dd, yyyy \'at\' h:mm a').format(eventDate);
+                    }
+                    
+                    if (reminderTime != null) {
+                      formattedReminderTime = DateFormat('MMM dd, yyyy \'at\' h:mm a').format(reminderTime);
+                    }
+
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                      child: ListTile(
+                        leading: Icon(Icons.event_note, color: Colors.orange),
+                        title: Text(
+                          reminder['eventTitle'] ?? 'Unknown Event',
+                          style: GoogleFonts.montserrat(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('By: ${reminder['organiserName'] ?? 'Unknown Organiser'}'),
+                            Text('Event: $formattedEventDate'),
+                            Text('Reminder: $formattedReminderTime', 
+                              style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.w500)),
+                          ],
+                        ),
+                        isThreeLine: true,
+                        trailing: IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () async {
+                            // Remove the reminder
+                            await NotificationService.cancelEventReminder(reminder['eventId']);
+                            
+                            // Also unsave the event
+                            final user = FirebaseAuth.instance.currentUser;
+                            if (user != null) {
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(user.uid)
+                                  .collection('savedEvents')
+                                  .doc(reminder['eventId'])
+                                  .delete();
+                            }
+                            
+                            setState(() {
+                              // Refresh the list
                             });
-                      },
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Event unsaved and reminder removed')),
+                            );
+                          },
+                        ),
+                      ),
                     );
                   },
                 );
               },
             ),
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ReminderTabState extends State<_ReminderTab> {
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const SizedBox(height: 20),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Container(
-            margin: const EdgeInsets.only(left: 20),
-            child: Text(
-              "Reminders",
-              style: GoogleFonts.montserrat(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFFFF2F67),
-              ),
-            ),
-          ),
-        ),
-        Expanded(
-          child: FutureBuilder<List<Map<String, dynamic>>>(
-            future: NotificationService.getUserReminders(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.notifications_none, size: 60, color: Colors.grey),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No active reminders',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 18,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Save events to automatically get reminders 3 days before they start!',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              final reminders = snapshot.data!;
-              return ListView.builder(
-                itemCount: reminders.length,
-                itemBuilder: (context, index) {
-                  final reminder = reminders[index];
-                  final eventDate = reminder['eventDate'] as DateTime?;
-                  final reminderTime = reminder['reminderTime'] as DateTime?;
-                  
-                  String formattedEventDate = 'Unknown date';
-                  String formattedReminderTime = 'Unknown time';
-                  
-                  if (eventDate != null) {
-                    formattedEventDate = DateFormat('EEE, MMM dd, yyyy \'at\' h:mm a').format(eventDate);
-                  }
-                  
-                  if (reminderTime != null) {
-                    formattedReminderTime = DateFormat('MMM dd, yyyy \'at\' h:mm a').format(reminderTime);
-                  }
-
-                  return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                    child: ListTile(
-                      leading: Icon(Icons.event_note, color: Colors.orange),
-                      title: Text(
-                        reminder['eventTitle'] ?? 'Unknown Event',
-                        style: GoogleFonts.montserrat(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('By: ${reminder['organiserName'] ?? 'Unknown Organiser'}'),
-                          Text('Event: $formattedEventDate'),
-                          Text('Reminder: $formattedReminderTime', 
-                            style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.w500)),
-                        ],
-                      ),
-                      isThreeLine: true,
-                      trailing: IconButton(
-                        icon: Icon(Icons.delete, color: Colors.red),
-                        onPressed: () async {
-                          // Remove the reminder
-                          await NotificationService.cancelEventReminder(reminder['eventId']);
-                          
-                          // Also unsave the event
-                          final user = FirebaseAuth.instance.currentUser;
-                          if (user != null) {
-                            await FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(user.uid)
-                                .collection('savedEvents')
-                                .doc(reminder['eventId'])
-                                .delete();
-                          }
-                          
-                          setState(() {
-                            // Refresh the list
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Event unsaved and reminder removed')),
-                          );
-                        },
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -929,136 +999,156 @@ class _HomeTabState extends State<_HomeTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
-      child: Column(
-        children: [
-          // Search bar with filter icon
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Search events...',
-                    prefixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24.0),
+    return RefreshIndicator(
+      onRefresh: () async {
+        await _fetchEvents();
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+        child: Column(
+          children: [
+            // Search bar with filter icon
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Search events...',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24.0),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(24.0),
-                ),
-                child: IconButton(
-                  icon: Icon(
-                    _selectedState == 'All States'
-                        ? Icons.filter_list
-                        : Icons.close,
+                const SizedBox(width: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(24.0),
                   ),
-                  onPressed:
+                  child: IconButton(
+                    icon: Icon(
                       _selectedState == 'All States'
-                          ? _showStateFilterDialog
-                          : () {
-                            setState(() {
-                              _selectedState = 'All States';
-                            });
-                          },
-                  tooltip:
-                      _selectedState == 'All States'
-                          ? 'Filter by State'
-                          : 'Clear Filter',
+                          ? Icons.filter_list
+                          : Icons.close,
+                    ),
+                    onPressed:
+                        _selectedState == 'All States'
+                            ? _showStateFilterDialog
+                            : () {
+                              setState(() {
+                                _selectedState = 'All States';
+                              });
+                            },
+                    tooltip:
+                        _selectedState == 'All States'
+                            ? 'Filter by State'
+                            : 'Clear Filter',
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          // Remove the filtered by container since we're using the icon instead
-          const SizedBox(height: 16),
-          // Location
-          Row(
-            children: [
-              const Icon(Icons.location_on_outlined),
-              const SizedBox(width: 4),
-              const Text('Events in ', style: TextStyle(fontSize: 16)),
-              Text(
-                _selectedState == 'All States' ? 'Malaysia' : _selectedState,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Remove the filtered by container since we're using the icon instead
+            const SizedBox(height: 16),
+            // Location
+            Row(
+              children: [
+                const Icon(Icons.location_on_outlined),
+                const SizedBox(width: 4),
+                const Text('Events in ', style: TextStyle(fontSize: 16)),
+                Text(
+                  _selectedState == 'All States' ? 'Malaysia' : _selectedState,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Event list
-          Expanded(
-  child:
-      _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _filteredEvents.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.event_busy, size: 60, color: Colors.grey),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No Events Found',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 18,
-                          color: Colors.grey,
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Event list
+            Expanded(
+    child:
+        _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _filteredEvents.isEmpty
+                ? SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Container(
+                      height: MediaQuery.of(context).size.height * 0.6,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.event_busy, size: 60, color: Colors.grey),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No Events Found',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 18,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _searchQuery.isNotEmpty || _selectedState != 'All States'
+                                  ? 'Try adjusting your search or filter settings'
+                                  : 'No events available at the moment',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Pull down to refresh',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 12,
+                                color: Colors.grey[400],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _searchQuery.isNotEmpty || _selectedState != 'All States'
-                            ? 'Try adjusting your search or filter settings'
-                            : 'No events available at the moment',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                itemCount: _filteredEvents.length,
-                itemBuilder: (context, index) {
-                  final event = _filteredEvents[index];
-                  return EventCard(
-                    imageUrl: event['image'],
-                    title: event['title'],
-                    organiser: event['organiser'],
-                    tags: event['tags'],
-                    date: event['date'],
-                    eventId: event['eventId'],
-                    media: event['media'],
-                    description: event['description'],
-                    location: event['location'],
-                    geoPoint: event['geoPoint'],
-                    wsLink: event['wsLink'],
-                    parking: event['parking'],
-                    endDate: event['endDate'],
-                    isOrganiser: false,
-                    onSaveTap: () => toggleSaveEvent(event['eventId']),
-                  );
-                },
-              ),
-          ),
-        ],
+                    ),
+                  )
+                : ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  itemCount: _filteredEvents.length,
+                  itemBuilder: (context, index) {
+                    final event = _filteredEvents[index];
+                    return EventCard(
+                      imageUrl: event['image'],
+                      title: event['title'],
+                      organiser: event['organiser'],
+                      tags: event['tags'],
+                      date: event['date'],
+                      eventId: event['eventId'],
+                      media: event['media'],
+                      description: event['description'],
+                      location: event['location'],
+                      geoPoint: event['geoPoint'],
+                      wsLink: event['wsLink'],
+                      parking: event['parking'],
+                      endDate: event['endDate'],
+                      isOrganiser: false,
+                      onSaveTap: () => toggleSaveEvent(event['eventId']),
+                    );
+                  },
+                ),
+            ),
+          ],
+        ),
       ),
     );
   }
