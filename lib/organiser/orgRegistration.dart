@@ -98,7 +98,6 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
           'phoneNumber': _phoneController.text.trim(),
           'email': _emailController.text.trim(),
           'attachments': [permitUrl, ssmUrl],
-          'description': '',
           'status': 'Pending',
         });
 
@@ -115,7 +114,7 @@ class _OrganiserRegisterState extends State<OrganiserRegister> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Account created! Please check your email to verify your account.',
+              'Account created!',
             ),
           ),
         );

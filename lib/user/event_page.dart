@@ -48,7 +48,7 @@ class EventPage extends StatefulWidget {
 class _EventPageState extends State<EventPage> {
   final TextEditingController _feedbackController = TextEditingController();
   String _selectedRating = '5 Ratings';
-  String _selectedDisplayRating = '5 Ratings';
+  String _selectedDisplayRating = 'All Ratings';
   bool _hasSubmittedFeedback = false;
 
   @override
@@ -347,14 +347,47 @@ class _EventPageState extends State<EventPage> {
   Widget _buildFollowSection() {
     return Row(
       children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.person, color: Colors.grey),
+        FutureBuilder<QuerySnapshot>(
+          future: FirebaseFirestore.instance
+              .collection('organisers')
+              .where('organizationName', isEqualTo: widget.organiser)
+              .limit(1)
+              .get(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.person, color: Colors.grey),
+              );
+            }
+
+            if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+              final organiserData = snapshot.data!.docs.first.data() as Map<String, dynamic>;
+              final imageUrl = organiserData['profileImageUrl'];
+              
+              if (imageUrl != null && imageUrl.isNotEmpty) {
+                return CircleAvatar(
+                  radius: 20,
+                  backgroundImage: NetworkImage(imageUrl),
+                );
+              }
+            }
+            
+            return Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.person, color: Colors.grey),
+            );
+          },
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -373,7 +406,6 @@ class _EventPageState extends State<EventPage> {
           ),
         ),
         ElevatedButton(
-          //TODO: Onpres
           onPressed: () {},
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF4CAF50),
@@ -743,6 +775,7 @@ class _EventPageState extends State<EventPage> {
           value: _selectedDisplayRating,
           items:
               [
+                'All Ratings',
                 '1 Ratings',
                 '2 Ratings',
                 '3 Ratings',
@@ -782,8 +815,15 @@ class _EventPageState extends State<EventPage> {
 
         // Feedback items
         StreamBuilder(
-          stream:
-              FirebaseFirestore.instance
+          stream: _selectedDisplayRating == 'All Ratings'
+              ? FirebaseFirestore.instance
+                  .collection('event')
+                  .doc(widget.eventId)
+                  .collection('feedback')
+                  .where('status', isEqualTo: 'Safe')
+                  //.orderBy('timestamp', descending: true)
+                  .snapshots()
+              : FirebaseFirestore.instance
                   .collection('event')
                   .doc(widget.eventId)
                   .collection('feedback')
@@ -799,10 +839,6 @@ class _EventPageState extends State<EventPage> {
             if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
               return const Text('No feedback yet.');
             }
-
-            final docs = snapshot.data!.docs;
-            // print('Loaded feedback count: ${docs.length}');
-            // print('Event ID used: ${widget.eventId}');
 
             return Column(
               children:

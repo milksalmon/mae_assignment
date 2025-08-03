@@ -1,17 +1,16 @@
-/**
- * Firebase Cloud Functions for Event Reminders
- * Checks for due reminders every minute and sends FCM notifications
+/*
+  Firebase Cloud Functions for Event Reminders
+  Checks for due reminders every minute and sends FCM notifications
  */
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 
-// Initialize Firebase Admin SDK
 admin.initializeApp();
 
-/**
- * Scheduled function that runs every minute to check for due reminders
- * and send FCM notifications to users
+/*
+  Scheduled function that runs every minute to check for due reminders
+  and send FCM notifications to users
  */
 export const sendEventReminders = functions
   .runWith({

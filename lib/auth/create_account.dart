@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../organiser/orgRegistration.dart';
 import '../user/userDashboard.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -57,7 +56,7 @@ class _CreateAccountState extends State<CreateAccount> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Account created! Please check your email to verify your account.',
+              'Account created!',
             ),
           ),
         );

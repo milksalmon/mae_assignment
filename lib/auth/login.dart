@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mae_assignment/services/auth_services.dart';
 import 'package:mae_assignment/services/notification_service.dart';
-import 'create_account.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -99,7 +98,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 onPressed: () async {
-                  // TODO: Handle login logic
                   final email = emailController.text.trim();
                   final password = passwordController.text.trim();
 
@@ -222,7 +220,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         '/adminDashboard',
                       );
                     } else if (role == 'user') {
-                      Navigator.pushReplacementNamed(context, '/userDashboard');
+                      Navigator.pushReplacementNamed(context, '/userDashboard');  
+                    }  else if (role == 'organiser') {
+                      Navigator.pushReplacementNamed(context, '/orgDashboard');
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -273,7 +273,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
 
                   onPressed: () {
-                    // TODO: Navigate to sign up
                     Navigator.pushNamed(context, '/signup');
                   },
                   child: const Text('Sign Up'),
