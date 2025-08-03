@@ -48,7 +48,7 @@ class EventPage extends StatefulWidget {
 class _EventPageState extends State<EventPage> {
   final TextEditingController _feedbackController = TextEditingController();
   String _selectedRating = '5 Ratings';
-  String _selectedDisplayRating = '5 Ratings';
+  String _selectedDisplayRating = 'All Ratings';
   bool _hasSubmittedFeedback = false;
 
   @override
@@ -775,6 +775,7 @@ class _EventPageState extends State<EventPage> {
           value: _selectedDisplayRating,
           items:
               [
+                'All Ratings',
                 '1 Ratings',
                 '2 Ratings',
                 '3 Ratings',
@@ -814,8 +815,15 @@ class _EventPageState extends State<EventPage> {
 
         // Feedback items
         StreamBuilder(
-          stream:
-              FirebaseFirestore.instance
+          stream: _selectedDisplayRating == 'All Ratings'
+              ? FirebaseFirestore.instance
+                  .collection('event')
+                  .doc(widget.eventId)
+                  .collection('feedback')
+                  .where('status', isEqualTo: 'Safe')
+                  //.orderBy('timestamp', descending: true)
+                  .snapshots()
+              : FirebaseFirestore.instance
                   .collection('event')
                   .doc(widget.eventId)
                   .collection('feedback')
@@ -831,10 +839,6 @@ class _EventPageState extends State<EventPage> {
             if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
               return const Text('No feedback yet.');
             }
-
-            final docs = snapshot.data!.docs;
-            // print('Loaded feedback count: ${docs.length}');
-            // print('Event ID used: ${widget.eventId}');
 
             return Column(
               children:
