@@ -116,16 +116,10 @@ class _EventPageState extends State<EventPage> {
   }
 
   Future<void> _submitFeedback(BuildContext context) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('You must be logged in to submit feedback.'),
-        ),
-      );
-      return;
-    }
+    final user = FirebaseAuth.instance.currentUser!;
     final feedbackText = _feedbackController.text.trim();
+
+    // If feedback is empty
     if (feedbackText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter some feedback')),
@@ -133,23 +127,26 @@ class _EventPageState extends State<EventPage> {
       return;
     }
 
+    // Feedback data (Subcollection of event)
     final feedbackData = {
       'userId': user.uid,
-      'name': user.displayName ?? 'Anonymous',
+      'name': user.displayName,
       'comment': feedbackText,
       'rating': _selectedRating,
       'status': 'Safe',
       'timestamp': Timestamp.now(),
     };
 
+
     try {
+      // Add subcollection to firestore in event
       await FirebaseFirestore.instance
           .collection('event')
           .doc(widget.eventId)
           .collection('feedback')
           .add(feedbackData);
 
-      // INCREMENT THE NUMBER
+      // Update organiser's rating from their events, admin can see.
       final organiserSnapshot =
           await FirebaseFirestore.instance
               .collection('organisers')
@@ -157,6 +154,7 @@ class _EventPageState extends State<EventPage> {
               .limit(1)
               .get();
 
+      // 
       if (organiserSnapshot.docs.isNotEmpty) {
         final organiserId = organiserSnapshot.docs.first.id;
         final ratingDocRef = FirebaseFirestore.instance
@@ -726,7 +724,7 @@ class _EventPageState extends State<EventPage> {
           ),
           const SizedBox(height: 12),
 
-          // RATING DROPDOWN
+          // RATING DROPDOWN, SELECTED RATING
           DropdownButtonFormField<String>(
             value: _selectedRating,
             items:

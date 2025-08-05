@@ -968,6 +968,7 @@ class _HomeTabState extends State<_HomeTab> {
     }
   }
 
+  // Search Events, Filter Events
   List<Map<String, dynamic>> get _filteredEvents {
     final query = _searchQuery.toLowerCase();
 
@@ -980,7 +981,7 @@ class _HomeTabState extends State<_HomeTab> {
           event['organiser'].toLowerCase().contains(query) ||
           event['tags'].toLowerCase().contains(query);
 
-      // State filter
+      // Country State filter
       bool matchesState =
           _selectedState == 'All States' ||
           event['location'].toLowerCase().contains(
