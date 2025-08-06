@@ -33,9 +33,12 @@ class _OrganizerAccountManagementState
     try {
       final selectedIds =
           _selectedOrganisers.entries
+              // entry.value = docID of the selected checkbox
               .where((entry) => entry.value)
+              // entry.key = is the boolean true/false.
               .map((entry) => entry.key)
               .toList();
+      // WRITE ALL THE SELECTED DOCID INTO LIST {}
 
       for (String docId in selectedIds) {
         await FirebaseFirestore.instance
@@ -55,6 +58,7 @@ class _OrganizerAccountManagementState
       ).showSnackBar(SnackBar(content: Text('Failed to update status: $e')));
     }
   }
+  // UPDATE STATUS SUSPEND & UNSUSPEND END
 
   final Map<String, bool> _selectedOrganisers = {};
 
