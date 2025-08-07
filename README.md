@@ -2,6 +2,10 @@
 
 JAMBU is a Malaysian food event finder application. This app was created for our Mobile App Engineering Assignment. 
 
+## Application APK release file
+
+Please download the apk file at the link to experience the mobile application: https://drive.google.com/file/d/1DdkS4rcEDYbtt_mF_P1XfhA_0hxaGXbg/view?usp=sharing
+
 ## Getting Started
 
 Make sure you have the following installed:
